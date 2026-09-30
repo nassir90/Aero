@@ -14,16 +14,18 @@ The bar under the game steps through each scene. You can also jump straight to o
 | **1. Copy.** Drag a box around the runner, pick Copy or Cut, and click to paste. The dashed box follows the selection as it moves and resizes with depth. | Copies walk together. While you carry a copy, grey ghosts preview where it will land. |
 | ![Title](docs/title.jpg) | ![A drop leaving the sea](docs/title_drop.jpg) |
 | **2. Title.** Hover to stir the sea of digits. | Click to drop a ripple. The centre sinks, rebounds into a peak, and throws off a blob of digits. The blob falls back in and sends out one smaller ripple. |
-| ![Arrival, sunset](docs/arrival_1.jpg) | ![Arrival, hands](docs/arrival_2.jpg) |
-| **3. Arrival.** A glass walkway with blocks flying along its whole length and photos floating beside it. | The photos are generated, then reduced to 128 px and a 48-colour palette before the game loads them. |
-| ![Arrival, the end of the path](docs/arrival_4.jpg) | ![Cold open](docs/cold_open.jpg) |
+| ![Arrival, sunset and daffodil](docs/arrival_1.jpg) | ![Arrival, hands and penguin](docs/arrival_2.jpg) |
+| **3. Arrival.** A glass walkway between "welcome back." and "We Missed You", with blocks flying along its whole length. | Photos float beside it at different heights. They are generated, then reduced to 128 px and a 48-colour palette before the game loads them. |
+| ![Arrival, glacier and dunes](docs/arrival_3.jpg) | ![Arrival, green hill and butterfly](docs/arrival_4.jpg) |
+| A blue glacier, sand dunes, | a green hill and a golden butterfly. |
+| ![Arrival, the end of the path](docs/arrival_5.jpg) | ![Cold open](docs/cold_open.jpg) |
 | The path ends at a blue "We Missed You" sign. | **4. Cold open.** Text cards. |
 | ![Halcyon](docs/halcyon.jpg) | ![The lake](docs/lake_tape.jpg) |
 | **5. Halcyon.** The cloud warden, low-poly and turning. | **7. The lake.** A found tape: square, blown out, with a pixel subtitle. |
 | ![Memory player](docs/memory_player.jpg) | ![The climb](docs/climb.jpg) |
 | **8. Memory player.** A draggable media player window over the level. | **10. The climb.** Pillars fading into white, four memories to collect, and a pipe home. |
-| ![Aiming a head throw](docs/climb_aim.jpg) | |
-| Hold **2** and steer with WASD to see where your head will be thrown; release to throw. Hold **1** to preview a roll the same way. A pink path means the head would fall. | |
+| ![Aiming a head throw](docs/climb_aim.jpg) | ![Rolling into the pipe](docs/climb_pipe_in.jpg) |
+| Tap **2** to throw your head to the next platform, or hold 2 and click a platform to throw it there. Press and drag while holding the key to preview; a pink path means the head would fall. | The pipe lies on the top plaza. Once all four memories are found, roll your head into it with **1**. |
 
 ## Controls
 
@@ -31,8 +33,10 @@ The bar under the game steps through each scene. You can also jump straight to o
 |---|---|
 | WASD / arrows | Walk (Shift runs) |
 | Space | Jump |
-| Hold 1, release | Aim and roll your head |
-| Hold 2, release | Aim and throw your head to a platform |
+| 1 | Roll your head forward |
+| 2 | Throw your head to the next platform |
+| Hold 1 / 2 + click | Roll or throw your head to the clicked spot |
+| Hold 1 / 2 + press and drag | Preview the path, release the mouse to send it |
 | Drag (Copy scene) | Select, then Copy / Cut and click to paste. Cmd/Ctrl+C and Cmd/Ctrl+X also work. |
 | Drag (Climb) | Look around |
 
