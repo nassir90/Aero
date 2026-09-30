@@ -1,0 +1,30 @@
+{
+  "dev1_body": {
+    "title": "Dev log 01: a body made of math",
+    "vo": "Aero's runner didn't come from an asset store. He's a formula. Rounded cylinders for the arms and legs, one flat torso, blended only where they should touch. Surface nets turn that math into a mesh, eleven bones bend it, and every frame renders at four hundred by three hundred, then scales up with hard pixels. When his waist looked too narrow, nobody eyeballed it. We measured it."
+  },
+  "dev2_world": {
+    "title": "Dev log 02: building the sky",
+    "vo": "The world works the same way. Platforms stand on pillars that fade into white. Every ring is one solid shape with a hole cut out, painted with its own gradient. The title sea is ten thousand digits in a shader, and it ripples when you click. And the head is a separate sphere, so you can roll it like a bowling ball, or throw it to the next platform."
+  },
+  "promo1_login": {
+    "title": "Aero: log in",
+    "vo": "Somewhere above the weather, there's a network nobody ever logged out of. Aero. Drop a ripple into a sea of ones and zeros. Walk a glass floor. And meet the one who kept the lights on."
+  },
+  "promo2_copy": {
+    "title": "Aero: copy yourself",
+    "vo": "In Aero, you're the cursor. Drag a box around yourself. Copy. Paste. Now there are two of you, and every copy moves when you move. Cut the whole crew, carry them as ghosts, and drop them wherever you like."
+  },
+  "promo3_climb": {
+    "title": "Aero: the climb",
+    "vo": "Then, climb. Pillars rise out of the white. Four memories wait along the route. Jump, roll your head across the gap, or throw it to the next platform. Find them all, and the pipe will take you home."
+  },
+  "cooked1_how": {
+    "title": "Are gamedevs cooked? Part 1",
+    "vo": "Are game devs cooked? This game was built in one session by Opus 5.5. It started from a forty five second reference reel, and one instruction: transfer the style, not the content. The first attempt missed badly. Flat images where there should have been geometry. So it rebuilt everything as real 3D, rigged the character from scratch, and started measuring its own work. Sixteen versions later, it's playable."
+  },
+  "cooked2_who": {
+    "title": "Are gamedevs cooked? Part 2",
+    "vo": "So who actually made it? The model wrote every line. The shaders, the physics, the rig, the level. But every fix started with a person saying what was wrong. The torso is too slender. The armpit stretches. That menu covers too much. That's the job now. Taste, direction, and knowing what good looks like. Game devs aren't cooked. The job just changed shape."
+  }
+}
