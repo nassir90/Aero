@@ -10,8 +10,8 @@ The bar under the game steps through each scene. You can also jump straight to o
 
 | | |
 |---|---|
-| ![Copy](docs/copy_demo.jpg) | ![Copying the crew](docs/copy_crew.jpg) |
-| **1. Copy.** Drag a box around the runner, pick Copy or Cut, and click to paste. The dashed box follows the selection as it moves and resizes with depth. | Copies walk together. While you carry a copy, grey ghosts preview where it will land. |
+| ![Copy, before logging in](docs/copy_login.jpg) | ![Copying the crew](docs/copy_crew.jpg) |
+| **1. Copy.** The room starts empty; Log in spawns the runner. Drag a box around him and pick Copy, Cut or Delete. The dashed box follows the selection as it moves and resizes with depth. | Copies walk together. While you carry a copy, grey ghosts preview where it will land. Delete everyone and Log in comes back. |
 | ![Title](docs/title.jpg) | ![A drop leaving the sea](docs/title_drop.jpg) |
 | **2. Title.** Hover to stir the sea of digits. | Click to drop a ripple. The centre sinks, rebounds into a peak, and throws off a blob of digits. The blob falls back in and sends out one smaller ripple. |
 | ![Arrival, sunset and daffodil](docs/arrival_1.jpg) | ![Arrival, hands and penguin](docs/arrival_2.jpg) |
@@ -25,7 +25,7 @@ The bar under the game steps through each scene. You can also jump straight to o
 | ![Memory player](docs/memory_player.jpg) | ![The climb](docs/climb.jpg) |
 | **8. Memory player.** A draggable media player window over the level. | **10. The climb.** Pillars fading into white, four memories to collect, and a pipe home. |
 | ![Aiming a head throw](docs/climb_aim.jpg) | ![Rolling into the pipe](docs/climb_pipe_in.jpg) |
-| Tap **2** to throw your head to the next platform, or hold 2 and click a platform to throw it there. Press and drag while holding the key to preview; a pink path means the head would fall. | The pipe lies on the top plaza. Once all four memories are found, roll your head into it with **1**. |
+| Tap **2** to throw your head to the next platform. Hold 2 and move the mouse to aim at a spot, then release the key or click; a pink path means the head would fall. | The pipe lies on the top plaza. Once all four memories are found, roll your head into it with **1**. |
 
 ## Controls
 
@@ -35,9 +35,9 @@ The bar under the game steps through each scene. You can also jump straight to o
 | Space | Jump |
 | 1 | Roll your head forward |
 | 2 | Throw your head to the next platform |
-| Hold 1 / 2 + click | Roll or throw your head to the clicked spot |
-| Hold 1 / 2 + press and drag | Preview the path, release the mouse to send it |
-| Drag (Copy scene) | Select, then Copy / Cut and click to paste. Cmd/Ctrl+C and Cmd/Ctrl+X also work. |
+| Hold 1 / 2 + move the mouse | Aim at the spot under the cursor; release the key (or click) to send the head there |
+| Hold 1 / 2 + WASD | Go back to aiming along your facing |
+| Drag (Copy scene) | Select, then Copy / Cut / Delete and click to paste. Cmd/Ctrl+C, Cmd/Ctrl+X and Delete also work. |
 | Drag (Climb) | Look around |
 
 ## Layout

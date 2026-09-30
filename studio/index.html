@@ -127,6 +127,7 @@ function gameShot(opts) { return Object.assign({ kind: 'game' }, opts); }
 async function enterScene(i) {
   G.__aeroJump(i); await sleep(1200);
   const S = G.__aeroActive();
+  if (i === 0 && S.login) S.login();
   if (!S.__wrapped) { S.__u = S.update; S.update = (dt, t) => { if (G.__studio) S.__u(dt, t); }; S.__wrapped = true; }
   return S;
 }

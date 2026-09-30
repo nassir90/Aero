@@ -38,7 +38,7 @@ body { background: var(--ground); color: var(--ink); font-family: var(--sans); o
 
 .marquee { position: absolute; display: none; border: .16em dashed #d4e0ff; background: rgba(90,130,255,.14); box-sizing: border-box; }
 .word { position: absolute; right: 4%; bottom: 4%; font: 400 2.6em var(--sans); color: #6f6d78; letter-spacing: .01em; }
-#begin { position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%); font: 700 1em var(--pixel); color: #1c1b22; background: #ecebf2; border: 0; padding: .6em 1.4em; cursor: pointer; box-shadow: 0 0 0 2px #1c1b22, 0 0 0 4px #ecebf2; }
+#begin { position: absolute; left: 4%; bottom: 5%; font: 700 1em var(--pixel); color: #1c1b22; background: #ecebf2; border: 0; padding: .6em 1.4em; cursor: pointer; box-shadow: 0 0 0 2px #1c1b22, 0 0 0 4px #ecebf2; }
 .stage.story #begin { display: none; }
 #copyOv, #titleOv { cursor: crosshair; touch-action: none; }
 .ctx.vista { position: absolute; display: none; z-index: 5; width: auto; left: 0; top: 0; padding: .25em; gap: .1em; }
@@ -143,6 +143,7 @@ body { background: var(--ground); color: var(--ink); font-family: var(--sans); o
       <div class="ctx vista" id="ctx">
         <button type="button" data-a="copy"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 1.5h9.5L14.5 4.5V14.5H2z" fill="#5b79c9" stroke="#1d2f66"/><rect x="4.5" y="1.5" width="6" height="4" fill="#dfe7fb" stroke="#1d2f66"/><rect x="8.3" y="2.3" width="1.4" height="2.4" fill="#1d2f66"/><rect x="4" y="8.5" width="8.5" height="6" rx=".5" fill="#f4f6fd" stroke="#1d2f66"/><path d="M5.5 10.5h5.5M5.5 12.3h5.5" stroke="#9aa9d4"/></svg>Copy<kbd>Ctrl C</kbd></button>
         <button type="button" data-a="cut"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 9.6 11.8 1.5M10.8 9.6 4.2 1.5" stroke="#44506f" stroke-width="1.6" stroke-linecap="round"/><circle cx="4.6" cy="12" r="2.4" fill="none" stroke="#c0392b" stroke-width="1.6"/><circle cx="11.4" cy="12" r="2.4" fill="none" stroke="#c0392b" stroke-width="1.6"/><circle cx="8" cy="7.2" r=".8" fill="#44506f"/></svg>Cut<kbd>Ctrl X</kbd></button>
+        <button type="button" data-a="delete"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 4.5h9l-.8 10H4.3z" fill="#dfe7fb" stroke="#1d2f66"/><path d="M2.5 4.5h11M6 2.5h4v2H6z" fill="none" stroke="#1d2f66"/><path d="M6.4 6.8v5.6M8 6.8v5.6M9.6 6.8v5.6" stroke="#c0392b"/></svg>Delete<kbd>Del</kbd></button>
       </div>
       <button id="begin" type="button">Log in</button>
     </section>
@@ -520,6 +521,17 @@ frame.addEventListener('pointerdown', e => {
 frame.addEventListener('pointermove', e => { Object.assign(AIM, framePx(e)); if (AIM.down) e.stopPropagation(); }, true);
 frame.addEventListener('pointerup', e => { if (!AIM.down) return; Object.assign(AIM, framePx(e)); AIM.down = false; AIM.up = { x: AIM.x, y: AIM.y }; e.stopPropagation(); }, true);
 frame.addEventListener('pointercancel', () => { AIM.down = false; }, true);
+function aimTracker() {
+  let follow = false, ax = 0, ay = 0, wasd = false;
+  return {
+    reset() { follow = false; ax = AIM.x; ay = AIM.y; wasd = !!(KEYS.f || KEYS.b || KEYS.l || KEYS.r); },
+    tick() {
+      const w = !!(KEYS.f || KEYS.b || KEYS.l || KEYS.r); if (w && !wasd) follow = false; wasd = w;
+      if (Math.hypot(AIM.x - ax, AIM.y - ay) > 6) { follow = true; ax = AIM.x; ay = AIM.y; }
+    },
+    get mouse() { return AIM.down || follow; },
+  };
+}
 const aimRay = (cam, p) => { const r = new THREE.Raycaster(); r.setFromCamera(new THREE.Vector2(p.x / frame.clientWidth * 2 - 1, 1 - p.y / frame.clientHeight * 2), cam); return r.ray; };
 const AIM_OK = new THREE.Color(0x7ff0ff), AIM_NO = new THREE.Color(0xff6b9a), AIM_DOTS = 34;
 function aimGuide() {
@@ -634,6 +646,7 @@ function headTravel(R, o) {
 }
 function walker(R, clamp, cam) {
   const vel = new THREE.Vector3(); let facing = R.root.rotation.y, base = null, h = 0, vy = 0, held = false, prev1 = false, prev2 = false, aiming = null;
+  const track = aimTracker();
   const pick = p => {
     const ray = aimRay(cam, p), k = (base - ray.origin.y) / ray.direction.y; if (!(k > 0)) return null;
     const q = ray.origin.clone().addScaledVector(ray.direction, k); clamp(q); q.y = base; return q;
@@ -647,16 +660,19 @@ function walker(R, clamp, cam) {
   });
   const step = (dt, t) => {
     if (base === null) base = R.root.position.y;
-    if (!aiming && !travel.active()) { if (KEYS.roll && !prev1) aiming = 'roll'; else if (KEYS.throw && !prev2) aiming = 'throw'; }
+    if (!aiming && !travel.active()) { if (KEYS.roll && !prev1) aiming = 'roll'; else if (KEYS.throw && !prev2) aiming = 'throw'; if (aiming) track.reset(); }
     prev1 = !!KEYS.roll; prev2 = !!KEYS.throw;
+    if (aiming) track.tick();
     if (aiming && h === 0 && (AIM.up || (!KEYS[aiming] && !AIM.down))) {
-      const k = aiming, dest = AIM.up ? pick(AIM.up) : null; aiming = null; travel.unaim();
+      const k = aiming, dest = AIM.up ? pick(AIM.up) : track.mouse ? pick(AIM) : null; aiming = null; travel.unaim();
       if (dest) { facing = Math.atan2(dest.x - R.root.position.x, dest.z - R.root.position.z); R.root.rotation.y = facing; }
       travel.start(k, facing, dest);
     }
     if (travel.active()) { travel.update(dt); vel.set(0, 0, 0); return; }
     const ix = (KEYS.r ? 1 : 0) - (KEYS.l ? 1 : 0), iz = (KEYS.b ? 1 : 0) - (KEYS.f ? 1 : 0), sp = KEYS.run ? 6.2 : 3.4;
     const w = new THREE.Vector3(ix, 0, iz); if (w.lengthSq()) { w.normalize(); facing = Math.atan2(w.x, w.z); }
+    const aimAt = aiming && track.mouse ? pick(AIM) : null;
+    if (aimAt && !w.lengthSq()) facing = Math.atan2(aimAt.x - R.root.position.x, aimAt.z - R.root.position.z);
     vel.x += (w.x * sp - vel.x) * Math.min(1, dt * 10); vel.z += (w.z * sp - vel.z) * Math.min(1, dt * 10);
     const p = R.root.position; p.x += vel.x * dt; p.z += vel.z * dt; clamp(p);
     let dr = facing - R.root.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); R.root.rotation.y += dr * Math.min(1, dt * 12);
@@ -664,7 +680,7 @@ function walker(R, clamp, cam) {
     held = !!KEYS.j; vy -= 22 * dt; h = Math.max(0, h + vy * dt); if (h === 0 && vy < 0) vy = 0;
     R.root.position.y = base + h;
     animateRunner(R, dt, Math.hypot(vel.x, vel.z), h === 0, t);
-    if (aiming) { R.root.updateMatrixWorld(true); const d = AIM.down ? pick(AIM) : null; if (AIM.down && !d) travel.unaim(); else travel.aim(aiming, facing, t, d); }
+    if (aiming) { R.root.updateMatrixWorld(true); if (track.mouse && !aimAt) travel.unaim(); else travel.aim(aiming, facing, t, aimAt); }
   };
   step.height = () => h;
   step.travelling = () => travel.active();
@@ -716,12 +732,19 @@ function buildCopy() {
   const key = new THREE.DirectionalLight(0xffffff, 1.2); key.position.set(3, 6, 5); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
   Object.assign(key.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8 }); scene.add(key);
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: .35 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
-  const lead = makeRunner(); scene.add(lead.root);
-  const crew = [lead], MAXCREW = 16;
+  let lead = null, crew = [];
+  const MAXCREW = 16;
   const clampP = p => { p.x = Math.max(-4.4, Math.min(4.4, p.x)); p.z = Math.max(-2.4, Math.min(2.2, p.z)); };
-  lead.walk = walker(lead, clampP, cam);
-  const mq = $('#marquee'), ctx = $('#ctx'), ov = $('#copyOv');
+  const mq = $('#marquee'), ctx = $('#ctx'), ov = $('#copyOv'), login = $('#begin');
   const A = -1.6, B = 1.9, LOOP = 8.6;
+  let demoT0 = 0;
+  const syncLogin = () => { login.style.display = crew.length ? 'none' : ''; };
+  function spawn() {
+    if (crew.length) return;
+    const r = makeRunner(); r.root.position.set(A, 0, 0); r.root.rotation.y = .2; r.walk = walker(r, clampP, cam); r.flick = now + .5;
+    scene.add(r.root); crew.push(r); lead = r; mode = 'demo'; demoT0 = now; S = null; syncLogin(); chime(660);
+  }
+  login.onclick = () => { if (active) spawn(); };
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
   function box(x) { const a = toFrame(V(x - .66, 2.5, 0), cam), b = toFrame(V(x + .66, -.08, 0), cam); return { x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y }; }
   const ease = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u);
@@ -731,7 +754,7 @@ function buildCopy() {
 
   const hand = new THREE.Vector3(); let S = null, dragging = false;
   function demo(dt, t) {
-    const R = lead, u = t % LOOP, b0 = box(A), dx = box(B).x - b0.x;
+    const R = lead, u = (t - demoT0) % LOOP, b0 = box(A), dx = box(B).x - b0.x;
     R.root.position.set(u >= 4.7 ? B : A, 0, 0); R.root.rotation.y = .2;
     animateRunner(R, dt, 0, true, t);
     let arm = null, crouch = 0;
@@ -751,11 +774,11 @@ function buildCopy() {
     if (u >= 3.2 && u < 3.6) vis = Math.floor(u * 16) % 2 === 0;
     else if (u >= 3.6 && u < 4.7) { vis = false; ox = dx * ease((u - 3.6) / 1.1); }
     else if (u >= 4.7 && u < 5.1) { ox = dx; vis = u > 4.95 || Math.floor(u * 20) % 2 === 0; }
-    R.root.visible = vis;
+    R.root.visible = vis && !(R.flick && t < R.flick && Math.floor(t * 20) % 2);
     if (on) rect(x0 + ox, y0, x1 + ox, y1); else hideRect();
   }
   function resetPose(r) { r.hips.position.y = .98; r.spine.rotation.x = 0; r.shL.rotation.z = -.1; r.shR.rotation.z = .1; r.root.visible = true; }
-  function toPlay() { if (mode === 'play') return; mode = 'play'; resetPose(lead); hideRect(); }
+  function toPlay() { if (mode === 'play') return; mode = 'play'; if (lead) resetPose(lead); hideRect(); }
 
   const ray = new THREE.Raycaster(), floorPlane = new THREE.Plane(V(0, 1, 0), 0);
   const px = e => { const r = frame.getBoundingClientRect(); return { x: (e.clientX - r.left) * frame.clientWidth / r.width, y: (e.clientY - r.top) * frame.clientHeight / r.height }; };
@@ -798,6 +821,7 @@ function buildCopy() {
   }
   function begin(kind) {
     if (!sel.length || carry) return; ctx.classList.remove('on');
+    if (kind === 'delete') { sel.forEach(r => { r.flick = now + .35; r.hideAfter = true; r.dying = true; }); sel = []; clearSel(); chime(300); return; }
     const src = sel.reduce((a, r) => a.add(r.root.position), V(0, 0, 0)).multiplyScalar(1 / sel.length);
     carry = { kind, w: selRect.x1 - selRect.x0, h: selRect.y1 - selRect.y0, from: V(src.x, 0, src.z) };
     if (kind === 'cut') sel.forEach(r => { r.flick = now + .35; r.hideAfter = true; });
@@ -837,6 +861,7 @@ function buildCopy() {
   addEventListener('keydown', e => {
     if (!active) return;
     if ((e.metaKey || e.ctrlKey) && (e.code === 'KeyC' || e.code === 'KeyX') && sel.length && !carry) { begin(e.code === 'KeyC' ? 'copy' : 'cut'); e.preventDefault(); }
+    else if ((e.code === 'Delete' || e.code === 'Backspace') && sel.length && !carry) { begin('delete'); e.preventDefault(); }
     else if (e.code === 'Escape' && (sel.length || carry || drag)) { drag = null; clearSel(); e.preventDefault(); }
     else if (KEYMAP[e.code]) toPlay();
   });
@@ -844,20 +869,21 @@ function buildCopy() {
   return { scene, cam,
     update(dt, t) {
       now = t;
-      if (mode === 'demo') { demo(dt, t); return; }
+      if (mode === 'demo') { if (lead) demo(dt, t); return; }
       for (const r of crew) r.walk(dt, t + (r.seed || 0));
-      if (drag && mouse && lead.root.visible) {
+      if (drag && mouse && lead && lead.root.visible) {
         lead.root.rotation.y += (0 - lead.root.rotation.y) * Math.min(1, dt * 10);
         lead.root.updateMatrixWorld(true);
         const c = toFrame(lead.chest.getWorldPosition(V(0, 0, 0)), cam), right = mouse.x > c.x;
         const sh = right ? lead.shR : lead.shL, el = right ? lead.elR : lead.elL, s = toFrame(sh.getWorldPosition(V(0, 0, 0)), cam);
         sh.rotation.z = Math.atan2(mouse.x - s.x, mouse.y - s.y); sh.rotation.x = 0; el.rotation.x = 0;
         (right ? lead.shL : lead.shR).rotation.z = right ? -.1 : .1;
-      } else { lead.shL.rotation.z = -.1; lead.shR.rotation.z = .1; }
+      } else if (lead) { lead.shL.rotation.z = -.1; lead.shR.rotation.z = .1; }
       for (const r of crew) {
         if (r.flick && t < r.flick) r.root.visible = Math.floor(t * 20) % 2 === 0;
-        else if (r.flick) { r.flick = 0; r.root.visible = !r.hideAfter; }
+        else if (r.flick) { r.flick = 0; r.root.visible = !r.hideAfter; if (r.dying) { r.walk.cancel(); if (r.head.parent !== r.root) r.head.parent.remove(r.head); scene.remove(r.root); r.dead = true; } }
       }
+      if (crew.some(r => r.dead)) { crew = crew.filter(r => !r.dead); lead = crew[0] || null; syncLogin(); }
       if (carry) {
         placeGhosts();
         const pulse = .8 + Math.sin(t * 6) * .2; GHOST.lineSkin.color.setRGB(.9 * pulse, .92 * pulse, pulse); GHOST.line.color.copy(GHOST.lineSkin.color);
@@ -867,7 +893,8 @@ function buildCopy() {
         const a = around(sel.filter(r => r.root.visible)); if (a) { selRect = a; rect(a.x0, a.y0, a.x1, a.y1); if (ctx.classList.contains('on')) placeMenu(); }
       }
     },
-    enter() { active = true; }, leave() { active = false; drag = null; clearSel(); } };
+    login: spawn,
+    enter() { active = true; syncLogin(); if (stage.classList.contains('story')) spawn(); }, leave() { active = false; drag = null; clearSel(); } };
 }
 
 function buildTitle() {
@@ -922,23 +949,31 @@ function buildTitle() {
   const hit = e => { const r = frame.getBoundingClientRect(); ray.setFromCamera(new THREE.Vector2((e.clientX - r.left) / r.width * 2 - 1, 1 - (e.clientY - r.top) / r.height * 2), cam); return ray.ray.intersectPlane(plane, new THREE.Vector3()); };
   let target = null, ri = 0, bursts = [], blobs = [];
   const seaY = (x, z, t) => Math.sin(x * .21 + t * .8) * 1.1 + Math.sin(z * .17 - t * .65) * 1.3 + Math.sin((x - z) * .09 + t * .45) * 1.9 + Math.sin(x * .5 + z * .4 + t * 1.3) * .35;
-  const glyphMat = [0, 1].map(k => { const tx = tex.clone(); tx.needsUpdate = true; tx.repeat.set(.5, 1); tx.offset.set(k * .5, 0); return new THREE.SpriteMaterial({ map: tx, color: lin(0xdfe4ff), toneMapped: false, alphaTest: .5 }); });
+  const glyphTex = [0, 1].map(k => { const tx = tex.clone(); tx.needsUpdate = true; tx.repeat.set(.5, 1); tx.offset.set(k * .5, 0); return tx; });
+  const GLYPH = .62;
   function makeBlob() {
-    const g = new THREE.Group(), n = 20;
+    const g = new THREE.Group(), n = 12;
+    g.mats = glyphTex.map(tx => new THREE.SpriteMaterial({ map: tx, color: new THREE.Color(), toneMapped: false, alphaTest: .5 }));
     for (let i = 0; i < n; i++) {
       const y = 1 - 2 * (i + .5) / n, r = Math.sqrt(1 - y * y), a = i * 2.39996;
-      const sp = new THREE.Sprite(glyphMat[i % 2]); sp.position.set(Math.cos(a) * r * .46, y * .46, Math.sin(a) * r * .46); sp.scale.setScalar(.27); g.add(sp);
+      const sp = new THREE.Sprite(g.mats[i % 2]); sp.position.set(Math.cos(a) * r * .6, y * .6, Math.sin(a) * r * .6); sp.scale.setScalar(GLYPH); g.add(sp);
     }
     g.visible = false; scene.add(g); return g;
   }
   const pool = [makeBlob(), makeBlob(), makeBlob()]; let pi = 0;
-  pool.forEach(g => { g.neck = [0, 1, 2].map(i => { const sp = new THREE.Sprite(glyphMat[i % 2]); sp.visible = false; scene.add(sp); return sp; }); });
+  pool.forEach(g => { g.neck = [0, 1, 2].map(i => { const sp = new THREE.Sprite(g.mats[i % 2]); sp.visible = false; scene.add(sp); return sp; }); });
+  const U = mat.uniforms, _c = new THREE.Color(), _p = new THREE.Vector3();
+  function tint(g, x, y, z, surf) {
+    const d = Math.min(1, Math.max(0, (cam.position.distanceTo(_p.set(x, y, z)) - 6) / 44));
+    _c.copy(U.near.value).lerp(U.far.value, d).multiplyScalar(.78 + surf * .07).lerp(U.bg.value, sm((d - .25) / .7));
+    g.mats.forEach(m => m.color.copy(_c));
+  }
   const colAt = a => a < .825 ? -1.7 * Math.sin(6.28318 * a / 1.1) * (1 + 1.1 * sm((a - .25) / .55)) : 3.57 * (1 - sm((a - .825) / .625));
   function neck(g, x, z, y0, y1, k) {
     g.neck.forEach((sp, i) => { const u = (i + .5) / g.neck.length; sp.visible = k > .02 && y1 > y0;
-      sp.position.set(x, y0 + (y1 - y0) * u, z); sp.scale.setScalar(.3 * k * (.55 + .45 * Math.abs(u - .5) * 2)); });
+      sp.position.set(x, y0 + (y1 - y0) * u, z); sp.scale.setScalar(GLYPH * k * (.55 + .45 * Math.abs(u - .5) * 2)); });
   }
-  document.fonts && document.fonts.load('700 26px Silkscreen').then(() => glyphMat.forEach(m => { m.map.needsUpdate = true; }));
+  document.fonts && document.fonts.load('700 26px Silkscreen').then(() => glyphTex.forEach(tx => { tx.needsUpdate = true; }));
   const ripple = (x, z, w) => mat.uniforms.rip.value[ri++ % 6].set(x, z, mat.uniforms.t.value, w);
   ov.addEventListener('pointermove', e => { target = hit(e); });
   ov.addEventListener('pointerleave', () => { target = null; });
@@ -955,16 +990,16 @@ function buildTitle() {
       const a = t - b.t0, g = b.g, surf = seaY(b.x, b.z, t);
       if (b.phase === 'wait') {
         if (a < .74) continue;
-        b.phase = 'rise'; b.y = surf + colAt(a) - .45; b.vy = 4.8; g.visible = true;
+        b.phase = 'rise'; b.y = surf + colAt(a) - .6; b.vy = 4.8; g.visible = true;
       }
       if (b.phase === 'rise') {
         b.vy -= 16 * dt; b.y += b.vy * dt;
         const grow = sm((a - .74) / .22), stretch = 1 + Math.min(.45, Math.abs(b.vy) * .045);
         g.scale.set(grow / Math.sqrt(stretch), grow * stretch, grow / Math.sqrt(stretch));
-        const top = surf + Math.max(0, colAt(a)), gap = b.y - .4 * grow * stretch - top;
-        neck(g, b.x, b.z, top, b.y - .3 * grow, a < 1.25 ? 1 - sm(gap / 1.1) : 0);
-        if (b.vy < 0 && b.y - .4 <= surf + .9 && b.y - .4 > surf) neck(g, b.x, b.z, surf, b.y - .3, sm(1 - (b.y - .4 - surf) / .9));
-        if (b.vy < 0 && b.y - .4 <= surf) { b.phase = 'merge'; b.m = 0; ripple(b.x, b.z, .6); chime(330); }
+        const top = surf + Math.max(0, colAt(a)), gap = b.y - .6 * grow * stretch - top;
+        neck(g, b.x, b.z, top, b.y - .45 * grow, a < 1.25 ? 1 - sm(gap / 1.1) : 0);
+        if (b.vy < 0 && b.y - .6 <= surf + .9 && b.y - .6 > surf) neck(g, b.x, b.z, surf, b.y - .45, sm(1 - (b.y - .6 - surf) / .9));
+        if (b.vy < 0 && b.y - .6 <= surf) { b.phase = 'merge'; b.m = 0; ripple(b.x, b.z, .6); chime(330); }
       } else if (b.phase === 'merge') {
         b.m += dt; const u = sm(b.m / .3);
         b.y += (surf - .05 - b.y) * Math.min(1, dt * 14);
@@ -972,7 +1007,7 @@ function buildTitle() {
         neck(g, b.x, b.z, surf - .2, b.y, 1 - u);
         if (b.m > .3) { g.visible = false; neck(g, 0, 0, 0, 0, 0); b.phase = 'done'; }
       }
-      g.position.set(b.x, b.y, b.z); g.rotation.y += dt * 1.6;
+      g.position.set(b.x, b.y, b.z); g.rotation.y += dt * 1.6; tint(g, b.x, b.y, b.z, surf);
     }
     blobs = blobs.filter(b => b.phase !== 'done');
   }
@@ -1265,6 +1300,7 @@ function buildClimb() {
   const pos = new THREE.Vector3(0, 0, 1.5), vel = new THREE.Vector3(), RAD = .32, HT = 2.2;
   let active = false, grounded = false, ground = null, checkpoint = boxes[0], facing = Math.PI, coyote = 0, jumpHeld = false, simT = 0;
   let pipe = null, won = false, roll1 = false, throw2 = false, throwTo = null, aiming = null, camInit = false;
+  const track = aimTracker();
   const tOff = new THREE.Vector3(), camLook = new THREE.Vector3();
   const followCam = (dt, want) => {
     if (!camInit) { camLook.copy(want); camInit = true; }
@@ -1364,10 +1400,11 @@ function buildClimb() {
       followCam(dt, travel.active() ? Rr.head.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 1.3 - Rr.headY, 0)) : pos.clone().add(new THREE.Vector3(0, 1.3, 0)));
       return;
     }
-    if (!aiming) { if (keys.roll && !roll1) aiming = 'roll'; else if (keys.throw && !throw2) aiming = 'throw'; }
+    if (!aiming) { if (keys.roll && !roll1) aiming = 'roll'; else if (keys.throw && !throw2) aiming = 'throw'; if (aiming) track.reset(); }
     roll1 = !!keys.roll; throw2 = !!keys.throw;
+    if (aiming) track.tick();
     if (aiming && grounded && (AIM.up || (!keys[aiming] && !AIM.down))) {
-      const k = aiming, clicked = !!AIM.up, dest = clicked ? pickFor(k, AIM.up) : null; aiming = null; travel.unaim();
+      const k = aiming, clicked = !!AIM.up || track.mouse, dest = AIM.up ? pickFor(k, AIM.up) : track.mouse ? pickFor(k, AIM) : null; aiming = null; travel.unaim();
       if (!clicked || dest) {
         if (dest) { facing = Math.atan2(dest.x - pos.x, dest.z - pos.z); Rr.root.rotation.y = facing; }
         if (travel.start(k, facing, dest)) { placePopups(); followCam(dt, pos.clone().add(new THREE.Vector3(0, 1.3, 0))); return; }
@@ -1378,6 +1415,8 @@ function buildClimb() {
     const ix = (keys.r ? 1 : 0) - (keys.l ? 1 : 0), iz = (keys.b ? 1 : 0) - (keys.f ? 1 : 0);
     const want = new THREE.Vector3(ix, 0, iz);
     if (want.lengthSq()) { want.normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw); facing = Math.atan2(want.x, want.z); }
+    const aimAt = aiming && track.mouse ? pickFor(aiming, AIM) : null;
+    if (aimAt && !want.lengthSq()) facing = Math.atan2(aimAt.x - pos.x, aimAt.z - pos.z);
     const accel = grounded ? 40 : 14, speed = 6.2;
     vel.x += (want.x * speed - vel.x) * Math.min(1, accel * dt / speed);
     vel.z += (want.z * speed - vel.z) * Math.min(1, accel * dt / speed);
@@ -1407,7 +1446,7 @@ function buildClimb() {
     Rr.root.position.copy(pos);
     let dr = facing - Rr.root.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); Rr.root.rotation.y += dr * Math.min(1, dt * 12);
     animateRunner(Rr, dt, Math.hypot(vel.x, vel.z), grounded, t);
-    if (aiming) { Rr.root.updateMatrixWorld(true); const d = AIM.down ? pickFor(aiming, AIM) : null; if (AIM.down && !d) travel.unaim(); else travel.aim(aiming, facing, t, d); }
+    if (aiming) { Rr.root.updateMatrixWorld(true); if (track.mouse && !aimAt) travel.unaim(); else travel.aim(aiming, facing, t, aimAt); }
 
     for (const m of mems) {
       if (m.got) continue;
@@ -1467,16 +1506,16 @@ function buildClimb() {
   return { scene, cam, update, reset, enter() { active = true; }, leave() { active = false; for (const k in keys) keys[k] = false; } };
 }
 
-const PLAY_NOTE = 'WASD moves, Space jumps. Tap 1 to roll your head or 2 to throw it; hold 1 / 2 and click (or press and drag) to pick where it goes. Drag to look. Find 4 memories, then roll your head into the pipe.';
+const PLAY_NOTE = 'WASD moves, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it. Drag to look. Find 4 memories, then roll your head into the pipe.';
 const SCENES = [
-  { id: 'copy',    name: 'Copy',          note: 'Drag a box around him, pick Copy or Cut, click to paste. WASD walks everyone, Space jumps. Tap 1 / 2 to roll or throw heads; hold 1 / 2 and click to pick the spot.', ov: 'copyOv', build: buildCopy, walk: true },
+  { id: 'copy',    name: 'Copy',          note: 'Log in to spawn him. Drag a box around him and pick Copy, Cut or Delete; click to paste. WASD walks everyone, Space jumps. Tap 1 / 2 to roll or throw heads; hold 1 / 2 and move the mouse to aim.', ov: 'copyOv', build: buildCopy, walk: true },
   { id: 'title',   name: 'Title',         note: 'Hover the sea to stir it; click to drop a ripple.', ov: 'titleOv', build: buildTitle },
-  { id: 'arrive',  name: 'Arrival',       note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it; hold 1 / 2 and click (or press and drag) to pick where it goes.', ov: null, build: buildArrival, walk: true },
+  { id: 'arrive',  name: 'Arrival',       note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: null, build: buildArrival, walk: true },
   { id: 'open',    name: 'Cold open',     note: 'Text cards. Click or Enter skips, Esc goes to the game.', ov: 'cards', lines: ['Did anyone ever log out?', 'Or did we just stop coming back?'] },
   { id: 'reveal',  name: 'Halcyon',       note: 'Character reveal, low-poly and turning.', ov: 'revealOv', build: buildReveal },
   { id: 'lights',  name: 'Lights on',     note: 'Text card.', ov: 'cards', lines: ['Then who kept the lights on?'] },
   { id: 'tape',    name: 'The lake',      note: 'Found tape: square, blown out, pixel subtitle.', ov: 'tapeOv', build: buildTape },
-  { id: 'player',  name: 'Memory player', note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it; hold 1 / 2 and click (or press and drag) to pick where it goes.', ov: 'playerOv', build: buildPlayer, walk: true },
+  { id: 'player',  name: 'Memory player', note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: 'playerOv', build: buildPlayer, walk: true },
   { id: 'goup',    name: 'Go back up',    note: 'Text card.', ov: 'cards', lines: ['Will you go back up?'] },
   { id: 'climb',   name: 'The climb',     note: PLAY_NOTE, ov: 'playOv', build: buildClimb, walk: true },
 ];
@@ -1528,7 +1567,6 @@ sel.addEventListener('change', () => jumpTo(+sel.value));
 $('#prevBtn').onclick = () => jumpTo(cur - 1);
 $('#nextBtn').onclick = () => jumpTo(cur + 1);
 $('#newBtn').onclick = newGame;
-$('#begin').onclick = newGame;
 $('#skipBtn').onclick = skipToGame;
 $('#cards').addEventListener('click', () => { advance = true; });
 $('#again').onclick = () => { get(CLIMB).reset(); jumpTo(CLIMB); };
