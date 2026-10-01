@@ -533,26 +533,51 @@ function aimTracker() {
   };
 }
 const aimRay = (cam, p) => { const r = new THREE.Raycaster(); r.setFromCamera(new THREE.Vector2(p.x / frame.clientWidth * 2 - 1, 1 - p.y / frame.clientHeight * 2), cam); return r.ray; };
-const AIM_OK = new THREE.Color(0x7ff0ff), AIM_NO = new THREE.Color(0xff6b9a), AIM_DOTS = 34;
+const AIM_LINE = new THREE.Color(0x5d55c9), AIM_LINE_NO = new THREE.Color(0xe8437a), AIM_DOTS = 22, AIM_R = .12, AIM_W = .06;
+function dashLine() {
+  return new THREE.ShaderMaterial({ side: THREE.BackSide, transparent: true, uniforms: { col: { value: AIM_LINE.clone() }, len: { value: 1 }, t: { value: 0 } },
+    vertexShader: 'varying float vU; void main() { vU = uv.x; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: 'uniform vec3 col; uniform float len, t; varying float vU; void main() { if (fract(vU * len / .42 - t) > .56) discard; gl_FragColor = linearToOutputTexel(vec4(col, 1.)); }' });
+}
+const AIM_DEPTH = new THREE.MeshBasicMaterial({ colorWrite: false, transparent: true });
 function aimGuide() {
   const g = new THREE.Group(); g.visible = false;
-  const dm = new THREE.MeshBasicMaterial({ color: AIM_OK, toneMapped: false, transparent: true, opacity: .95, depthWrite: false });
-  const dots = new THREE.InstancedMesh(new THREE.SphereGeometry(.07, 8, 6), dm, AIM_DOTS); dots.frustumCulled = false; dots.renderOrder = 6; g.add(dots);
-  const mm = new THREE.MeshBasicMaterial({ color: AIM_OK, toneMapped: false, transparent: true, opacity: .95, side: THREE.DoubleSide, depthWrite: false });
-  const mark = new THREE.Mesh(new THREE.RingGeometry(.26, .4, 28), mm); mark.rotation.x = -Math.PI / 2; mark.renderOrder = 6; g.add(mark);
+  const bead = silver(false); bead.transparent = true;
+  const dots = new THREE.InstancedMesh(new THREE.SphereGeometry(AIM_R * .92, 12, 8), bead, AIM_DOTS);
+  dots.frustumCulled = false; dots.renderOrder = 20; g.add(dots);
+  const pathDepth = new THREE.Mesh(new THREE.BufferGeometry(), AIM_DEPTH), pathLine = new THREE.Mesh(new THREE.BufferGeometry(), dashLine());
+  pathDepth.renderOrder = 21; pathLine.renderOrder = 22; pathDepth.frustumCulled = pathLine.frustumCulled = false; g.add(pathDepth, pathLine);
+  const ringR = .34, ringT = .06;
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(ringR, ringT, 10, 40), silver(false)); ring.material.transparent = true; ring.renderOrder = 20;
+  const ringDepth = new THREE.Mesh(ring.geometry, AIM_DEPTH); ringDepth.renderOrder = 21;
+  const ringLine = new THREE.Mesh(new THREE.TorusGeometry(ringR, ringT + AIM_W, 10, 40), dashLine()); ringLine.renderOrder = 22;
+  ringLine.material.uniforms.len.value = Math.PI * 2 * ringR;
+  const mark = new THREE.Group(); mark.add(ring, ringDepth, ringLine); mark.rotation.x = -Math.PI / 2; g.add(mark);
   const M = new THREE.Matrix4(), P = new THREE.Vector3(), Q = new THREE.Quaternion(), S = new THREE.Vector3();
+  const OK_TINT = new THREE.Color(0xe6e6ec), NO_TINT = new THREE.Color(0xffb8cc);
   return { g,
     show(path, end, ok, t) {
-      g.visible = true; dm.color.copy(ok ? AIM_OK : AIM_NO); mm.color.copy(dm.color);
+      g.visible = true;
+      const line = ok ? AIM_LINE : AIM_LINE_NO, tint = ok ? OK_TINT : NO_TINT;
+      bead.color.copy(tint); ring.material.color.copy(tint);
+      [pathLine, ringLine].forEach(m => { m.material.uniforms.col.value.copy(line); m.material.uniforms.t.value = t * 1.6; });
       const L = [0]; for (let i = 1; i < path.length; i++) L.push(L[i - 1] + path[i].distanceTo(path[i - 1]));
-      const total = L[L.length - 1] || 1, shift = (t * .9) % 1; let j = 1;
+      const total = L[L.length - 1] || 0, shift = (t * .9) % 1; let j = 1;
       for (let i = 0; i < AIM_DOTS; i++) {
         const s = (i + shift) / AIM_DOTS * total; j = 1; while (j < path.length - 1 && L[j] < s) j++;
         const k = (s - L[j - 1]) / ((L[j] - L[j - 1]) || 1); P.lerpVectors(path[j - 1], path[j], Math.min(1, Math.max(0, k)));
-        S.setScalar(.55 + .45 * (1 - Math.abs(s / total - .5) * 2)); M.compose(P, Q, S); dots.setMatrixAt(i, M);
+        S.setScalar(.6 + .4 * (1 - Math.abs(s / (total || 1) - .5) * 2)); M.compose(P, Q, S); dots.setMatrixAt(i, M);
       }
       dots.instanceMatrix.needsUpdate = true;
-      mark.position.set(end.x, end.y + .03, end.z); mark.scale.setScalar(1 + Math.sin(t * 7) * .12);
+      pathDepth.geometry.dispose(); pathLine.geometry.dispose();
+      const pts = path.filter((p, i) => i === 0 || p.distanceToSquared(path[i - 1]) > 1e-4);
+      if (pts.length > 1 && total > .05) {
+        const curve = new THREE.CatmullRomCurve3(pts), seg = Math.min(96, Math.max(12, Math.round(total * 5)));
+        pathDepth.geometry = new THREE.TubeGeometry(curve, seg, AIM_R, 8, false);
+        pathLine.geometry = new THREE.TubeGeometry(curve, seg, AIM_R + AIM_W, 8, false);
+        pathLine.material.uniforms.len.value = total;
+      } else { pathDepth.geometry = new THREE.BufferGeometry(); pathLine.geometry = new THREE.BufferGeometry(); }
+      mark.position.set(end.x, end.y + ringT + .01, end.z); mark.rotation.z = t * .6; mark.scale.setScalar(1 + Math.sin(t * 7) * .08);
     },
     hide() { g.visible = false; } };
 }
@@ -644,7 +669,7 @@ function headTravel(R, o) {
     }
   };
 }
-function walker(R, clamp, cam) {
+function walker(R, clamp, cam, group) {
   const vel = new THREE.Vector3(); let facing = R.root.rotation.y, base = null, h = 0, vy = 0, held = false, prev1 = false, prev2 = false, aiming = null;
   const track = aimTracker();
   const pick = p => {
@@ -658,20 +683,29 @@ function walker(R, clamp, cam) {
     land: at => { R.root.position.set(at.x, base, at.z); },
     respawn: () => new THREE.Vector3(R.root.position.x, base, R.root.position.z),
   });
+  let formation = false;
+  const leader = () => { if (!group || !formation) return null; const L = group(); return L && L !== R && L.walk ? L : null; };
+  const resolve = raw => {
+    const L = leader(); if (!L) return { dest: raw, f: null };
+    if (!raw) return { dest: null, f: L.walk.facing() };
+    const q = R.root.position.clone().add(raw.clone().sub(L.root.position)); clamp(q); q.y = base; return { dest: q, f: null };
+  };
   const step = (dt, t) => {
     if (base === null) base = R.root.position.y;
-    if (!aiming && !travel.active()) { if (KEYS.roll && !prev1) aiming = 'roll'; else if (KEYS.throw && !prev2) aiming = 'throw'; if (aiming) track.reset(); }
+    if (!aiming && !travel.active()) { if (KEYS.roll && !prev1) aiming = 'roll'; else if (KEYS.throw && !prev2) aiming = 'throw'; if (aiming) { track.reset(); formation = false; } }
     prev1 = !!KEYS.roll; prev2 = !!KEYS.throw;
-    if (aiming) track.tick();
+    if (aiming) { track.tick(); if (KEYS.run) formation = true; }
     if (aiming && h === 0 && (AIM.up || (!KEYS[aiming] && !AIM.down))) {
-      const k = aiming, dest = AIM.up ? pick(AIM.up) : track.mouse ? pick(AIM) : null; aiming = null; travel.unaim();
+      const k = aiming, { dest, f } = resolve(AIM.up ? pick(AIM.up) : track.mouse ? pick(AIM) : null); aiming = null; travel.unaim();
+      if (f !== null) facing = f;
       if (dest) { facing = Math.atan2(dest.x - R.root.position.x, dest.z - R.root.position.z); R.root.rotation.y = facing; }
       travel.start(k, facing, dest);
     }
     if (travel.active()) { travel.update(dt); vel.set(0, 0, 0); return; }
     const ix = (KEYS.r ? 1 : 0) - (KEYS.l ? 1 : 0), iz = (KEYS.b ? 1 : 0) - (KEYS.f ? 1 : 0), sp = KEYS.run ? 6.2 : 3.4;
     const w = new THREE.Vector3(ix, 0, iz); if (w.lengthSq()) { w.normalize(); facing = Math.atan2(w.x, w.z); }
-    const aimAt = aiming && track.mouse ? pick(AIM) : null;
+    const aimed = aiming ? resolve(track.mouse ? pick(AIM) : null) : { dest: null, f: null }, aimAt = aimed.dest;
+    if (aimed.f !== null) facing = aimed.f;
     if (aimAt && !w.lengthSq()) facing = Math.atan2(aimAt.x - R.root.position.x, aimAt.z - R.root.position.z);
     vel.x += (w.x * sp - vel.x) * Math.min(1, dt * 10); vel.z += (w.z * sp - vel.z) * Math.min(1, dt * 10);
     const p = R.root.position; p.x += vel.x * dt; p.z += vel.z * dt; clamp(p);
@@ -686,6 +720,7 @@ function walker(R, clamp, cam) {
   step.travelling = () => travel.active();
   step.focus = () => travel.active() ? R.head.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 1.3 - R.headY, 0)) : R.root.position.clone().add(new THREE.Vector3(0, 1.3 - h, 0));
   step.cancel = () => { aiming = null; travel.unaim(); };
+  step.facing = () => facing;
   return step;
 }
 
@@ -738,10 +773,16 @@ function buildCopy() {
   const mq = $('#marquee'), ctx = $('#ctx'), ov = $('#copyOv'), login = $('#begin');
   const A = -1.6, B = 1.9, LOOP = 8.6;
   let demoT0 = 0;
+  const swarmLead = () => {
+    if (crew.length < 2) return null;
+    const c = crew.reduce((a, r) => a.add(r.root.position), V(0, 0, 0)).multiplyScalar(1 / crew.length);
+    let best = null, bd = Infinity; for (const r of crew) { const d = r.root.position.distanceToSquared(c); if (d < bd) { bd = d; best = r; } }
+    return best;
+  };
   const syncLogin = () => { login.style.display = crew.length ? 'none' : ''; };
   function spawn() {
     if (crew.length) return;
-    const r = makeRunner(); r.root.position.set(A, 0, 0); r.root.rotation.y = .2; r.walk = walker(r, clampP, cam); r.flick = now + .5;
+    const r = makeRunner(); r.root.position.set(A, 0, 0); r.root.rotation.y = .2; r.walk = walker(r, clampP, cam, swarmLead); r.flick = now + .5;
     scene.add(r.root); crew.push(r); lead = r; mode = 'demo'; demoT0 = now; S = null; syncLogin(); chime(660);
   }
   login.onclick = () => { if (active) spawn(); };
@@ -754,7 +795,7 @@ function buildCopy() {
 
   const hand = new THREE.Vector3(); let S = null, dragging = false;
   function demo(dt, t) {
-    const R = lead, u = (t - demoT0) % LOOP, b0 = box(A), dx = box(B).x - b0.x;
+    const R = lead, u = (t - demoT0) % LOOP, b0 = box(A);
     R.root.position.set(u >= 4.7 ? B : A, 0, 0); R.root.rotation.y = .2;
     animateRunner(R, dt, 0, true, t);
     let arm = null, crouch = 0;
@@ -766,19 +807,31 @@ function buildCopy() {
     R.root.updateMatrixWorld(true);
     const hp = toFrame(R.handL.getWorldPosition(hand), cam);
     if (u < .5) S = null;
-    let on = false, x0, y0, x1, y1, ox = 0;
-    if (u >= 1.3 && u < 2.8) { if (!dragging || !S) S = { x: Math.min(hp.x, b0.x), y: Math.min(hp.y, b0.y) }; dragging = true; const k = ease((u - 1.3) / 1.5) ** 2;
-      on = true; x0 = S.x; y0 = S.y; x1 = hp.x + (b0.x + b0.w - hp.x) * k; y1 = hp.y + (b0.y + b0.h - hp.y) * k; }
-    else { dragging = false; if (u >= 2.8 && u < 5.1) { on = true; if (!S) S = { x: b0.x, y: b0.y }; x0 = S.x; y0 = S.y; x1 = b0.x + b0.w; y1 = b0.y + b0.h; } }
-    let vis = true;
+    if (u >= 1.3 && u < 2.8) {
+      if (!dragging || !S) S = { x: Math.min(hp.x, b0.x), y: Math.min(hp.y, b0.y) }; dragging = true; const k = ease((u - 1.3) / 1.5) ** 2;
+      rect(S.x, S.y, hp.x + (b0.x + b0.w - hp.x) * k, hp.y + (b0.y + b0.h - hp.y) * k); demoMargin = null;
+    } else if (u >= 2.8 && u < 5.1) {
+      if (dragging || !demoMargin) {
+        const r = { x0: S ? S.x : b0.x, y0: S ? S.y : b0.y, x1: b0.x + b0.w, y1: b0.y + b0.h }, b = bounds([R]), k = b.y1 - b.y0;
+        demoMargin = { l: (b.x0 - r.x0) / k, t: (b.y0 - r.y0) / k, r: (r.x1 - b.x1) / k, b: (r.y1 - b.y1) / k };
+      }
+      dragging = false;
+    } else { dragging = false; demoMargin = null; }
+    let vis = true, carried = false;
     if (u >= 3.2 && u < 3.6) vis = Math.floor(u * 16) % 2 === 0;
-    else if (u >= 3.6 && u < 4.7) { vis = false; ox = dx * ease((u - 3.6) / 1.1); }
-    else if (u >= 4.7 && u < 5.1) { ox = dx; vis = u > 4.95 || Math.floor(u * 20) % 2 === 0; }
+    else if (u >= 3.6 && u < 4.7) { vis = false; carried = true; }
+    else if (u >= 4.7 && u < 5.1) vis = u > 4.95 || Math.floor(u * 20) % 2 === 0;
     R.root.visible = vis && !(R.flick && t < R.flick && Math.floor(t * 20) % 2);
-    if (on) rect(x0 + ox, y0, x1 + ox, y1); else hideRect();
+    const g = demoGhostFor(); g.root.visible = carried;
+    if (carried) {
+      g.src = R; poseGhost(g, A + (B - A) * ease((u - 3.6) / 1.1), 0);
+      const pulse = .8 + Math.sin(t * 6) * .2; GHOST.lineSkin.color.setRGB(.9 * pulse, .92 * pulse, pulse); GHOST.line.color.copy(GHOST.lineSkin.color);
+    }
+    if (demoMargin) { const a = around(carried ? [g] : [R], demoMargin); if (a) rect(a.x0, a.y0, a.x1, a.y1); }
+    else if (!(u >= 1.3 && u < 2.8)) hideRect();
   }
   function resetPose(r) { r.hips.position.y = .98; r.spine.rotation.x = 0; r.shL.rotation.z = -.1; r.shR.rotation.z = .1; r.root.visible = true; }
-  function toPlay() { if (mode === 'play') return; mode = 'play'; if (lead) resetPose(lead); hideRect(); }
+  function toPlay() { if (mode === 'play') return; mode = 'play'; if (lead) resetPose(lead); if (demoGhost) demoGhost.root.visible = false; demoMargin = null; hideRect(); }
 
   const ray = new THREE.Raycaster(), floorPlane = new THREE.Plane(V(0, 1, 0), 0);
   const px = e => { const r = frame.getBoundingClientRect(); return { x: (e.clientX - r.left) * frame.clientWidth / r.width, y: (e.clientY - r.top) * frame.clientHeight / r.height }; };
@@ -792,8 +845,8 @@ function buildCopy() {
         const f = toFrame(V(p.x + dx, p.y + y, p.z + dz), cam); x0 = Math.min(x0, f.x); y0 = Math.min(y0, f.y); x1 = Math.max(x1, f.x); y1 = Math.max(y1, f.y); } }
     return x0 < Infinity ? { x0, y0, x1, y1 } : null;
   };
-  const around = rs => { const b = bounds(rs); if (!b || !margin) return null; const k = b.y1 - b.y0;
-    return { x0: b.x0 - margin.l * k, y0: b.y0 - margin.t * k, x1: b.x1 + margin.r * k, y1: b.y1 + margin.b * k }; };
+  const around = (rs, m = margin) => { const b = bounds(rs); if (!b || !m) return null; const k = b.y1 - b.y0;
+    return { x0: b.x0 - m.l * k, y0: b.y0 - m.t * k, x1: b.x1 + m.r * k, y1: b.y1 + m.b * k }; };
   let ghosts = [];
   function dropGhosts() { ghosts.forEach(g => scene.remove(g.root)); ghosts = []; }
   function clearSel() { sel.forEach(r => { if (r.hideAfter) { r.hideAfter = false; r.root.visible = true; } }); sel = []; selRect = null; carry = null; margin = null; dropGhosts(); ctx.classList.remove('on'); hideRect(); }
@@ -801,15 +854,18 @@ function buildCopy() {
     const m = margin || { l: 0, t: 0, r: 0, b: 0 }, k = carry.h / (1 + m.t + m.b);
     const to = floorAt({ x: p.x - (m.r - m.l) * k / 2, y: p.y + carry.h / 2 - m.b * k - k * .03 });
     return to && carry.from ? { dx: to.x - carry.from.x, dz: to.z - carry.from.z } : null; };
+  function poseGhost(g, x, z) {
+    const s = g.src.root; g.root.position.set(x, s.position.y, z); clampP(g.root.position); g.root.rotation.y = s.rotation.y;
+    POSE_KEYS.forEach(k => { g[k].rotation.copy(g.src[k].rotation); if (k === 'hips' || k === 'body') g[k].position.copy(g.src[k].position); });
+    g.head.position.copy(g.src.head.position);
+  }
   function placeGhosts() {
     const d = mouse && landing(mouse); if (d) carry.last = d;
     const D = carry.last || { dx: 0, dz: 0 };
-    ghosts.forEach(g => {
-      const s = g.src.root; g.root.position.set(s.position.x + D.dx, s.position.y, s.position.z + D.dz); clampP(g.root.position); g.root.rotation.y = s.rotation.y;
-      POSE_KEYS.forEach(k => { g[k].rotation.copy(g.src[k].rotation); if (k === 'hips' || k === 'body') g[k].position.copy(g.src[k].position); });
-      g.head.position.copy(g.src.head.position); g.root.visible = true;
-    });
+    ghosts.forEach(g => { poseGhost(g, g.src.root.position.x + D.dx, g.src.root.position.z + D.dz); g.root.visible = true; });
   }
+  let demoGhost = null, demoMargin = null;
+  const demoGhostFor = () => { if (!demoGhost) { demoGhost = makeGhost(); demoGhost.root.visible = false; scene.add(demoGhost.root); } return demoGhost; };
   function openMenu() {
     ctx.classList.add('on'); placeMenu();
   }
@@ -835,7 +891,7 @@ function buildCopy() {
     if (carry.kind === 'copy') {
       ghosts.forEach(g => {
         const r = makeRunner(); r.root.position.set(g.root.position.x, 0, g.root.position.z);
-        r.root.rotation.y = g.root.rotation.y; r.walk = walker(r, clampP, cam); r.seed = Math.random() * 10; r.flick = now + .3; scene.add(r.root); crew.push(r);
+        r.root.rotation.y = g.root.rotation.y; r.walk = walker(r, clampP, cam, swarmLead); r.seed = Math.random() * 10; r.flick = now + .3; scene.add(r.root); crew.push(r);
       });
     } else ghosts.forEach(g => { const r = g.src; r.root.position.x = g.root.position.x; r.root.position.z = g.root.position.z; r.hideAfter = false; r.flick = now + .3; });
     chime(784); sel = []; clearSel();
@@ -1508,7 +1564,7 @@ function buildClimb() {
 
 const PLAY_NOTE = 'WASD moves, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it. Drag to look. Find 4 memories, then roll your head into the pipe.';
 const SCENES = [
-  { id: 'copy',    name: 'Copy',          note: 'Log in to spawn him. Drag a box around him and pick Copy, Cut or Delete; click to paste. WASD walks everyone, Space jumps. Tap 1 / 2 to roll or throw heads; hold 1 / 2 and move the mouse to aim.', ov: 'copyOv', build: buildCopy, walk: true },
+  { id: 'copy',    name: 'Copy',          note: 'Log in to spawn him. Drag a box around him and pick Copy, Cut or Delete; click to paste. WASD walks everyone, Space jumps. Tap 1 / 2 to roll or throw heads; hold 1 / 2 and move the mouse to aim, add Shift to keep the crew in formation.', ov: 'copyOv', build: buildCopy, walk: true },
   { id: 'title',   name: 'Title',         note: 'Hover the sea to stir it; click to drop a ripple.', ov: 'titleOv', build: buildTitle },
   { id: 'arrive',  name: 'Arrival',       note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: null, build: buildArrival, walk: true },
   { id: 'open',    name: 'Cold open',     note: 'Text cards. Click or Enter skips, Esc goes to the game.', ov: 'cards', lines: ['Did anyone ever log out?', 'Or did we just stop coming back?'] },
