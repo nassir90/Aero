@@ -1,7 +1,8 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Aero</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Open+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Open+Sans:wght@400;600;800&display=swap">
 <style>
 :root {
   --ground: #0c0b10;
@@ -14,10 +15,11 @@
   --chrome: "Segoe UI", "Open Sans", system-ui, sans-serif;
   color-scheme: dark;
 }
-html, body { height: 100%; }
-body { background: var(--ground); color: var(--ink); font-family: var(--sans); overflow: hidden; }
-.stage { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding-inline: 16px; padding-block: 10px; }
-.frame { position: relative; width: var(--fw, 800px); height: calc(var(--fw, 800px) * .75); max-width: 100%; overflow: hidden; background: #000; font-size: calc(var(--fw, 800px) / 50); user-select: none; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans); overflow-x: hidden; }
+.capture, .capture body { height: 100%; overflow: hidden; }
+.stage { height: 100vh; height: 100svh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding-inline: 16px; padding-block: 10px; }
+.frame { position: relative; width: var(--fw, 800px); height: calc(var(--fw, 800px) / var(--ar, 1.33333)); max-width: 100%; overflow: hidden; background: #000; font-size: calc(var(--fw, 800px) / 50); user-select: none; }
 #gl, #static { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
 #gl { touch-action: none; }
 #static { opacity: 0; pointer-events: none; z-index: 40; mix-blend-mode: screen; }
@@ -62,6 +64,32 @@ body { background: var(--ground); color: var(--ink); font-family: var(--sans); o
 .scan { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px); }
 
 #tapeCv { position: absolute; top: 0; bottom: 0; left: 12.5%; width: 75%; height: 100%; image-rendering: pixelated; }
+.shape-tall #tapeCv, .shape-square #tapeCv { left: 0; width: 100%; height: auto; aspect-ratio: 1; top: 50%; bottom: auto; transform: translateY(-50%); }
+.shape-tall .wmp { left: 6%; top: 5%; width: 88%; }
+.shape-square .wmp { left: 5%; top: 5%; width: 60%; }
+.capture .stage { padding: 0; gap: 0; }
+.capture .more { display: none; }
+.more { position: relative; padding-block: 12vh 10vh; padding-inline: 16px; background: #5b9ee6 url(assets/sky_wide.jpg) center top / cover no-repeat; color: #10204a; }
+.more::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, var(--ground) 0, rgba(12,11,16,0) 9vh); pointer-events: none; }
+.more > * { position: relative; max-width: 980px; margin-inline: auto; }
+.more-head { text-align: center; margin-bottom: 8vh; }
+.more-head h2 { margin: 0 0 .3em; font: 700 clamp(48px, 9vw, 96px)/1 var(--pixel); color: #fff; letter-spacing: .04em; text-shadow: 0 .08em 0 #2f34c9; }
+.more-head p { margin: 0 auto; max-width: 34em; font: 600 clamp(16px, 2.2vw, 20px)/1.5 var(--sans); color: #fff; text-shadow: 0 1px 8px rgba(20,40,110,.45); text-wrap: balance; }
+.clip { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 48px); align-items: center; margin-bottom: 9vh; }
+.clip video { width: 100%; aspect-ratio: 1; display: block; background: #0c0b10; border-radius: 6px; box-shadow: 0 18px 40px rgba(16,40,110,.35), 0 0 0 1px rgba(255,255,255,.6); }
+.clip-text { min-width: 0; padding: clamp(18px, 3vw, 30px); background: rgba(255,255,255,.72); border: 1px solid rgba(255,255,255,.9); border-radius: 8px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.clip-text h3 { margin: 0 0 .5em; font: 700 clamp(18px, 2.4vw, 24px)/1.15 var(--pixel); color: #2f34c9; text-wrap: balance; }
+.clip-text p { margin: 0; font: 400 clamp(15px, 1.7vw, 18px)/1.6 var(--sans); color: #1b2550; }
+.clip.flip video { order: 2; }
+.more-foot { text-align: center; }
+.play-link { display: inline-block; font: 700 18px var(--pixel); color: #1c1b22; background: #ecebf2; padding: .7em 1.6em; text-decoration: none; box-shadow: 0 0 0 2px #1c1b22, 0 0 0 4px #ecebf2; }
+.more-foot p { margin: 1.2em 0 0; font: 700 15px var(--pixel); color: #1b2a6b; }
+@media (max-width: 700px) {
+  .more { background-image: url(assets/sky_tall.jpg); }
+  .clip, .clip.flip { grid-template-columns: minmax(0, 1fr); }
+  .clip.flip video { order: 0; }
+}
+.capture .bar, .capture .skip-hint { display: none !important; }
 
 .vista { position: absolute; left: 4%; top: 8%; width: 54%; box-sizing: border-box; padding: 0 .45em .45em; border-radius: .5em;
   background: linear-gradient(180deg, rgba(214,230,255,.62), rgba(126,164,232,.42) 45%, rgba(96,136,214,.5));
@@ -208,6 +236,30 @@ body { background: var(--ground); color: var(--ink); font-family: var(--sans); o
   </nav>
 </main>
 
+<section class="more" id="more" aria-labelledby="moreTitle">
+  <header class="more-head">
+    <h2 id="moreTitle">Aero</h2>
+    <p>A short game about a network nobody logged out of. Throw your head, copy yourself, and find your way back up.</p>
+  </header>
+  <article class="clip">
+    <video src="media/sq_sea.mp4" poster="media/sq_sea.jpg" autoplay muted loop playsinline preload="metadata" aria-label="The title sea throwing a drop of digits"></video>
+    <div class="clip-text"><h3>A sea of ones and zeros</h3><p>The title screen is ten thousand digits on a shader. Click and the surface sinks, rises into a peak, and throws a drop of digits that falls back in with one smaller ripple.</p></div>
+  </article>
+  <article class="clip flip">
+    <video src="media/sq_merge.mp4" poster="media/sq_merge.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Four copies throwing their heads at one spot and merging"></video>
+    <div class="clip-text"><h3>Copy yourself</h3><p>Log in, drag a box around yourself, copy and paste. Throw every head at the same spot and the bodies grow back, lock into the same step, and merge into one.</p></div>
+  </article>
+  <article class="clip">
+    <video src="media/sq_arrival.mp4" poster="media/sq_arrival.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Walking the glass path past photos"></video>
+    <div class="clip-text"><h3>Arrival</h3><p>A glass walkway between "welcome back." and "We Missed You", lined with photos of places you might have forgotten: a sunset field, a glacier, sand dunes, a green hill.</p></div>
+  </article>
+  <article class="clip flip">
+    <video src="media/sq_climb.mp4" poster="media/sq_climb.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Throwing the head to the next platform"></video>
+    <div class="clip-text"><h3>The climb</h3><p>Hold 2 and point to throw your head to the next platform. Find four memories, then roll your head into the pipe to get home.</p></div>
+  </article>
+  <footer class="more-foot"><a href="#stage" class="play-link">Play Aero</a><p>mpts.ie/games/aero</p></footer>
+</section>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
@@ -215,10 +267,21 @@ const $ = s => document.querySelector(s);
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const frame = $('#frame'), stage = $('#stage'), bar = $('#bar');
-const RW = 400, RH = 300;
+const QS = new URLSearchParams(location.search), SHAPE = QS.get('shape'), CAPTURE = QS.has('capture');
+const [RW, RH] = SHAPE === '9x16' ? [288, 512] : SHAPE === '1x1' ? [384, 384] : [400, 300];
+const AR = RW / RH;
+const FOV = f => {
+  if (AR >= 4 / 3 - 1e-3) return f;
+  const half = Math.atan(Math.tan(f * Math.PI / 360) * 4 / 3), keep = 2 * Math.atan(Math.tan(half) / AR) * 180 / Math.PI;
+  return f + (keep - f) * (AR < 1 ? .45 : .8);
+};
+document.documentElement.classList.toggle('shape-tall', AR < 1);
+document.documentElement.classList.toggle('shape-square', Math.abs(AR - 1) < 1e-3);
+document.documentElement.classList.toggle('capture', CAPTURE);
+stage.style.setProperty('--ar', AR);
 
 function fit() {
-  const fw = Math.max(280, Math.min(innerWidth - 32, (innerHeight - bar.offsetHeight - 30) * 4 / 3));
+  const fw = CAPTURE ? Math.min(innerWidth, innerHeight * AR) : Math.max(280, Math.min(innerWidth - 32, (innerHeight - bar.offsetHeight - 30) * AR));
   stage.style.setProperty('--fw', Math.floor(fw) + 'px');
 }
 addEventListener('resize', fit); fit();
@@ -479,6 +542,7 @@ $('#mute').onclick = () => { muted = !muted; $('#mute').textContent = 'Sound: ' 
 
 const sc = $('#static'), sx = sc.getContext('2d'), simg = sx.createImageData(160, 120);
 async function staticBurst(ms = 400) {
+  if (CAPTURE) return;
   sc.style.opacity = 1; const t0 = performance.now();
   while (performance.now() - t0 < ms) {
     const roll = (performance.now() / 5) % 120;
@@ -659,7 +723,7 @@ function walker(R, clamp, cam, group) {
     land: at => { R.root.position.set(at.x, base, at.z); },
     respawn: () => new THREE.Vector3(R.root.position.x, base, R.root.position.z),
   });
-  let formation = false;
+  let formation = false, wasTravelling = false, landedAt = -1e9, clock = 0;
   const leader = () => { if (!group || !formation) return null; const L = group(); return L && L !== R && L.walk ? L : null; };
   const resolve = raw => {
     const L = leader(); if (!L) return { dest: raw, f: null };
@@ -677,7 +741,9 @@ function walker(R, clamp, cam, group) {
       if (dest) { facing = Math.atan2(dest.x - R.root.position.x, dest.z - R.root.position.z); R.root.rotation.y = facing; }
       travel.start(k, facing, dest);
     }
-    if (travel.active()) { travel.update(dt); vel.set(0, 0, 0); return; }
+    clock = t;
+    if (travel.active()) { travel.update(dt); vel.set(0, 0, 0); wasTravelling = true; if (!travel.active()) { wasTravelling = false; landedAt = t; } return; }
+    if (wasTravelling) { wasTravelling = false; landedAt = t; }
     const ix = (KEYS.r ? 1 : 0) - (KEYS.l ? 1 : 0), iz = (KEYS.b ? 1 : 0) - (KEYS.f ? 1 : 0), sp = KEYS.run ? 6.2 : 3.4;
     const w = new THREE.Vector3(ix, 0, iz); if (w.lengthSq()) { w.normalize(); facing = Math.atan2(w.x, w.z); }
     const aimed = aiming ? resolve(track.mouse ? pick(AIM) : null) : { dest: null, f: null }, aimAt = aimed.dest;
@@ -697,6 +763,8 @@ function walker(R, clamp, cam, group) {
   step.focus = () => travel.active() ? R.head.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 1.3 - R.headY, 0)) : R.root.position.clone().add(new THREE.Vector3(0, 1.3 - h, 0));
   step.cancel = () => { aiming = null; travel.unaim(); };
   step.facing = () => facing;
+  step.settled = () => !travel.active() && h === 0;
+  step.landedRecently = (within = 1.5) => clock - landedAt < within;
   return step;
 }
 
@@ -738,7 +806,7 @@ const POSE_KEYS = ['hips', 'spine', 'chest', 'hipL', 'hipR', 'kneeL', 'kneeR', '
 
 function buildCopy() {
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a292e);
-  const cam = new THREE.PerspectiveCamera(38, RW / RH, .1, 100); cam.position.set(0, 2.2, 9); cam.lookAt(0, 1.1, 0);
+  const cam = new THREE.PerspectiveCamera(FOV(38), RW / RH, .1, 100); cam.position.set(0, 2.2, 9); cam.lookAt(0, 1.1, 0);
   scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3848, .7));
   const key = new THREE.DirectionalLight(0xffffff, 1.2); key.position.set(3, 6, 5); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
   Object.assign(key.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8 }); scene.add(key);
@@ -749,6 +817,35 @@ function buildCopy() {
   const mq = $('#marquee'), ctx = $('#ctx'), ov = $('#copyOv'), login = $('#begin');
   const A = -1.6, B = 1.9, LOOP = 8.6;
   let demoT0 = 0;
+  const MERGE_R = .5, MERGE_T = .7;
+  function stepMerges(dt, t) {
+    const free = crew.filter(r => !r.mergeInto && !r.dying && r.root.visible && r.walk.settled());
+    for (let i = 0; i < free.length; i++) for (let j = i + 1; j < free.length; j++) {
+      const a = free[i], b = free[j];
+      if (a.mergeInto || b.mergeInto) continue;
+      if (!(a.walk.landedRecently() || b.walk.landedRecently())) continue;
+      const dx = a.root.position.x - b.root.position.x, dz = a.root.position.z - b.root.position.z;
+      if (dx * dx + dz * dz > MERGE_R * MERGE_R) continue;
+      const keep = b === lead ? b : a, go = keep === a ? b : a;
+      go.mergeInto = keep; go.mergeT0 = t; go.walk.cancel();
+    }
+    for (const r of crew) {
+      if (!r.mergeInto) continue;
+      let k = r.mergeInto; while (k.mergeInto) k = k.mergeInto; r.mergeInto = k;
+      if (k.dead || k.dying) { r.mergeInto = null; continue; }
+      const u = Math.min(1, (t - r.mergeT0) / MERGE_T), a = u >= 1 ? 1 : Math.min(1, dt * (5 + 30 * u * u));
+      r.root.position.lerp(k.root.position, a);
+      let dr = k.root.rotation.y - r.root.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); r.root.rotation.y += dr * a;
+      POSE_KEYS.forEach(n => {
+        const s = r[n].rotation, d = k[n].rotation; s.x += (d.x - s.x) * a; s.y += (d.y - s.y) * a; s.z += (d.z - s.z) * a;
+        if (n === 'hips' || n === 'body') r[n].position.lerp(k[n].position, a);
+      });
+      if (r.head.parent === r.root && k.head.parent === k.root) r.head.position.lerp(k.head.position, a);
+      r.body.scale.lerp(k.body.scale, a); r.phase = k.phase;
+      if (u >= 1) { r.dying = true; r.flick = 0; r.walk.cancel(); scene.remove(r.root); r.dead = true; if (sel.includes(r)) { sel = []; clearSel(); } }
+    }
+    if (crew.some(r => r.dead && r.mergeInto)) chime(880);
+  }
   const swarmLead = () => {
     if (crew.length < 2) return null;
     const c = crew.reduce((a, r) => a.add(r.root.position), V(0, 0, 0)).multiplyScalar(1 / crew.length);
@@ -902,7 +999,8 @@ function buildCopy() {
     update(dt, t) {
       now = t;
       if (mode === 'demo') { if (lead) demo(dt, t); return; }
-      for (const r of crew) r.walk(dt, t + (r.seed || 0));
+      for (const r of crew) if (!r.mergeInto) r.walk(dt, t + (r.seed || 0));
+      stepMerges(dt, t);
       if (drag && mouse && lead && lead.root.visible) {
         lead.root.rotation.y += (0 - lead.root.rotation.y) * Math.min(1, dt * 10);
         lead.root.updateMatrixWorld(true);
@@ -931,7 +1029,7 @@ function buildCopy() {
 
 function buildTitle() {
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2c2fc0);
-  const cam = new THREE.PerspectiveCamera(50, RW / RH, .1, 200); cam.position.set(0, 8.5, 15); cam.lookAt(0, -1, -10);
+  const cam = new THREE.PerspectiveCamera(FOV(50), RW / RH, .1, 200); cam.position.set(0, 8.5, 15); cam.lookAt(0, -1, -10);
   const atlas = document.createElement('canvas'); atlas.width = 64; atlas.height = 32; const ax = atlas.getContext('2d');
   const drawAtlas = () => { ax.clearRect(0, 0, 64, 32); ax.fillStyle = '#fff'; ax.textAlign = 'center'; ax.textBaseline = 'middle'; ax.font = '700 26px Silkscreen, monospace'; ax.fillText('0', 16, 17); ax.fillText('1', 48, 17); };
   drawAtlas();
@@ -1066,7 +1164,7 @@ const PHOTOS = Object.fromEntries(['sunset', 'daffodil', 'hands', 'penguin', 'gl
 function buildArrival() {
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0xe9e8ef); scene.fog = new THREE.Fog(0xe9e8ef, 18, 48);
   scene.environment = ENV;
-  const cam = new THREE.PerspectiveCamera(42, RW / RH, .1, 200); cam.position.set(3.2, 3.2, 10.5); cam.lookAt(.6, 1.6, 0);
+  const cam = new THREE.PerspectiveCamera(FOV(42), RW / RH, .1, 200); cam.position.set(3.2, 3.2, 10.5); cam.lookAt(.6, 1.6, 0);
   scene.add(new THREE.HemisphereLight(0xffffff, 0xb8b4cc, .8));
   const key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(4, 8, 6); key.castShadow = true; key.shadow.mapSize.set(1024, 1024); Object.assign(key.shadow.camera, { left: -12, right: 12, top: 8, bottom: -8 }); scene.add(key);
   const TOP = .3;
@@ -1126,7 +1224,7 @@ function buildArrival() {
 
 function buildReveal() {
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1c0e58);
-  const cam = new THREE.PerspectiveCamera(36, RW / RH, .1, 100); cam.position.set(0, 1.5, 10); cam.lookAt(0, 1.25, 0);
+  const cam = new THREE.PerspectiveCamera(FOV(36), RW / RH, .1, 100); cam.position.set(0, 1.5, 10); cam.lookAt(0, 1.25, 0);
   scene.add(new THREE.AmbientLight(0x5a44c0, .55));
   const pm = new THREE.PointLight(0xff4fd8, 1.5, 14); pm.position.set(-3, 2.6, 3); scene.add(pm);
   const pc = new THREE.PointLight(0x39d8ff, 1.2, 14); pc.position.set(3.2, .6, 2.6); scene.add(pc);
@@ -1215,7 +1313,7 @@ function buildTape() {
 function buildPlayer() {
   const scene = new THREE.Scene(); scene.environment = ENV; scene.fog = new THREE.Fog(0xf2f0ff, 25, 90);
   scene.add(skyDome(0xb3a8ff, 0xf6f5ff, 0xffffff));
-  const cam = new THREE.PerspectiveCamera(46, RW / RH, .1, 400); cam.position.set(1.5, 5, 13); cam.lookAt(1.2, 1.4, 0);
+  const cam = new THREE.PerspectiveCamera(FOV(46), RW / RH, .1, 400); cam.position.set(1.5, 5, 13); cam.lookAt(1.2, 1.4, 0);
   scene.add(new THREE.HemisphereLight(0xffffff, 0x8f82e8, .55));
   const sun = new THREE.DirectionalLight(0xffffff, 1.2); sun.position.set(6, 12, 8); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10 }); scene.add(sun);
   const oct = new THREE.CylinderGeometry(5, 5, .6, 8); oct.rotateY(Math.PI / 8);
@@ -1254,7 +1352,7 @@ function buildPlayer() {
 function buildClimb() {
   const scene = new THREE.Scene(); scene.environment = ENV; scene.fog = new THREE.Fog(0xf4f2ff, 26, 120);
   scene.add(skyDome(0xa99bff, 0xf5f3ff, 0xffffff));
-  const cam = new THREE.PerspectiveCamera(58, RW / RH, .1, 500);
+  const cam = new THREE.PerspectiveCamera(FOV(58), RW / RH, .1, 500);
   scene.add(new THREE.HemisphereLight(0xffffff, 0x8f82e8, .5));
   const fill = new THREE.DirectionalLight(0x6a58ff, .6); fill.position.set(-30, 6, -10); scene.add(fill);
   const sun = new THREE.DirectionalLight(0xfff8ff, 1.25); sun.position.set(20, 40, 10); sun.castShadow = true;
@@ -1631,6 +1729,11 @@ function frameLoop() {
 }
 window.__aeroStep = sec => { for (let i = 0; i < sec * 60; i++) { sceneT += 1 / 60; activeScene && activeScene.update(1 / 60, sceneT); AIM.up = null; } activeScene && activeScene.scene && renderer.render(activeScene.scene, activeScene.cam); };
 window.__aeroJump = i => jumpTo(i);
+window.__aeroSceneAt = id => SCENE_AT(id);
+if (!CAPTURE && 'IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.play().catch(() => {}); else e.target.pause(); }), { threshold: .25 });
+  document.querySelectorAll('.clip video').forEach(v => io.observe(v));
+}
 window.__aeroActive = () => activeScene;
 
 { const m = /^#s(\d+)$/.exec(location.hash || ''); if (m && +m[1] < SCENES.length) enter(+m[1], run, true); else enter(0, run, true); }
