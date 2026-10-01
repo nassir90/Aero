@@ -152,7 +152,8 @@ body { background: var(--ground); color: var(--ink); font-family: var(--sans); o
 
     <section class="ov" id="titleOv"><div class="plate"><b>AERO</b></div></section>
 
-    <section class="ov" id="revealOv"><div class="name"><b>HALCYON</b><span>cloud warden · keeps the lights on</span></div><div class="scan"></div></section>
+    <section class="ov" id="revealOv"><div class="name"><b>HALCYON</b><span>cloud warden · keeps the lights on</span></div><div class="scan"></div>
+      <div class="end" id="end"><b>AERO</b><p>4 of 4 memories recovered. Welcome back.</p><button id="again" type="button">Play again</button></div></section>
 
     <section class="ov" id="tapeOv"><canvas id="tapeCv" width="240" height="240"></canvas></section>
 
@@ -179,7 +180,6 @@ body { background: var(--ground); color: var(--ink); font-family: var(--sans); o
     <section class="ov" id="playOv">
       <div class="hud" id="count">memories 0/4</div>
       <div class="toasts" id="toasts"></div>
-      <div class="end" id="end"><b>AERO</b><p>4 of 4 memories recovered. Welcome back.</p><button id="again" type="button">Play again</button></div>
     </section>
 
     <div class="pad">
@@ -1514,7 +1514,7 @@ function buildClimb() {
     }
     const bodyScale = T < OUT ? pipe.body * (1 - e(T / .3)) : e((T - OUT) / 1.3);
     Rr.body.scale.setScalar(Math.max(.001, bodyScale));
-    if (T >= END && !won) { won = true; Rr.root.attach(H); H.position.set(0, 1.93, 0); H.rotation.set(0, 0, 0); chime(523); setTimeout(() => chime(784), 300); setTimeout(() => $('#end').classList.add('on'), 900); }
+    if (T >= END && !won) { won = true; Rr.root.attach(H); H.position.set(0, 1.93, 0); H.rotation.set(0, 0, 0); chime(523); setTimeout(() => chime(784), 300); setTimeout(finale, 1600); }
     const look = T < OUT ? H.position.clone() : landing.clone().add(new THREE.Vector3(0, 1.2, 0));
     const off = T < OUT ? new THREE.Vector3(6, 3.5, 7) : new THREE.Vector3(Math.sin(T * .2) * 9, 5, Math.cos(T * .2) * 9);
     camLook.lerp(look, 1 - Math.exp(-dt * 8));
@@ -1540,19 +1540,21 @@ function buildClimb() {
 
 const PLAY_NOTE = 'WASD moves, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it. Drag to look. Find 4 memories, then roll your head into the pipe.';
 const SCENES = [
-  { id: 'copy',    name: 'Copy',          note: 'Log in to spawn him. Drag a box around him and pick Copy, Cut or Delete; click to paste. WASD walks everyone, Space jumps. Tap 1 / 2 to roll or throw heads; hold 1 / 2 and move the mouse to aim, add Shift to keep the crew in formation.', ov: 'copyOv', build: buildCopy, walk: true },
   { id: 'title',   name: 'Title',         note: 'Hover the sea to stir it; click to drop a ripple.', ov: 'titleOv', build: buildTitle },
-  { id: 'arrive',  name: 'Arrival',       note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: null, build: buildArrival, walk: true },
   { id: 'open',    name: 'Cold open',     note: 'Text cards. Click or Enter skips, Esc goes to the game.', ov: 'cards', lines: ['Did anyone ever log out?', 'Or did we just stop coming back?'] },
-  { id: 'reveal',  name: 'Halcyon',       note: 'Character reveal, low-poly and turning.', ov: 'revealOv', build: buildReveal },
-  { id: 'lights',  name: 'Lights on',     note: 'Text card.', ov: 'cards', lines: ['Then who kept the lights on?'] },
+  { id: 'copy',    name: 'Copy',          note: 'Log in to spawn him. Drag a box around him and pick Copy, Cut or Delete; click to paste. WASD walks everyone, Space jumps. Tap 1 / 2 to roll or throw heads; hold 1 / 2 and move the mouse to aim, add Shift to keep the crew in formation.', ov: 'copyOv', build: buildCopy, walk: true },
+  { id: 'arrive',  name: 'Arrival',       note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: null, build: buildArrival, walk: true },
   { id: 'tape',    name: 'The lake',      note: 'Found tape: square, blown out, pixel subtitle.', ov: 'tapeOv', build: buildTape },
   { id: 'player',  name: 'Memory player', note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: 'playerOv', build: buildPlayer, walk: true },
   { id: 'goup',    name: 'Go back up',    note: 'Text card.', ov: 'cards', lines: ['Will you go back up?'] },
   { id: 'climb',   name: 'The climb',     note: PLAY_NOTE, ov: 'playOv', build: buildClimb, walk: true },
+  { id: 'lights',  name: 'Lights on',     note: 'Text card.', ov: 'cards', lines: ['Then who kept the lights on?'] },
+  { id: 'reveal',  name: 'Halcyon',       note: 'Character reveal, low-poly and turning.', ov: 'revealOv', build: buildReveal },
 ];
 const CLIMB = SCENES.findIndex(d => d.id === 'climb');
-const STORY = [[0, 0, 5600], [1, 350, 3000], [2, 250, 4200], [3, 0, 0], [4, 400, 4600], [5, 0, 0], [6, 500, 3600], [7, 300, 3800], [8, 400, 0], [9, 0, 0]];
+const SCENE_AT = id => SCENES.findIndex(d => d.id === id);
+const STORY = [['title', 0, 3000], ['open', 350, 0], ['copy', 250, 5600], ['arrive', 300, 4200], ['tape', 500, 3600], ['player', 300, 3800], ['goup', 400, 0], ['climb', 0, 0]].map(([id, pre, hold]) => [SCENE_AT(id), pre, hold]);
+const FINALE = [['lights', 400, 0], ['reveal', 400, 4600]].map(([id, pre, hold]) => [SCENE_AT(id), pre, hold]);
 
 const built = new Map();
 const get = i => { const d = SCENES[i]; if (!d.build) return null; if (!built.has(i)) built.set(i, d.build()); return built.get(i); };
@@ -1567,6 +1569,7 @@ async function card(lines, id, hold) {
 }
 async function enter(i, id, hold) {
   if (activeScene && activeScene.leave) activeScene.leave();
+  $('#end').classList.remove('on');
   cur = (i + SCENES.length) % SCENES.length;
   const d = SCENES[cur];
   sel.value = cur; $('#sceneName').textContent = d.name; $('#sceneNote').textContent = d.note;
@@ -1602,6 +1605,18 @@ $('#newBtn').onclick = newGame;
 $('#skipBtn').onclick = skipToGame;
 $('#cards').addEventListener('click', () => { advance = true; });
 $('#again').onclick = () => { get(CLIMB).reset(); jumpTo(CLIMB); };
+async function finale() {
+  const id = ++run;
+  try {
+    for (const [i, pre, hold] of FINALE) {
+      if (pre) await staticBurst(pre);
+      if (id !== run) return;
+      await enter(i, id, false);
+      if (hold) await beat(hold, id);
+    }
+    if (id === run) $('#end').classList.add('on');
+  } catch (e) {  }
+}
 addEventListener('keydown', e => {
   const onControl = /^(INPUT|BUTTON|SELECT)$/.test(document.activeElement && document.activeElement.tagName);
   if (e.code === 'Escape' && stage.classList.contains('story')) { skipToGame(); e.preventDefault(); }

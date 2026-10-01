@@ -1,5 +1,5 @@
 (() => {
-const SCENE = { copy: 0, title: 1, arrive: 2, reveal: 4, tape: 6, climb: 9 };
+const SCENE = { title: 0, copy: 2, arrive: 3, tape: 4, climb: 7, reveal: 9 };
 const release = () => ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ShiftLeft', 'Space', 'Digit1', 'Digit2'].forEach(k => key(k, false));
 const drawGame = () => screen(gl());
 let mouseF = null;
