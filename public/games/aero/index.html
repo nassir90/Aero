@@ -342,7 +342,7 @@ function runnerSDF(x, y, z) {
   const yoke = roundCone(x, y, zt, -.18, 1.55, 0, .18, 1.55, 0, .09, .09);
   const LX = W - .075;
   const legs = smin(roundCone(x, y, z, -LX, .98, 0, -LX, .075, 0, .075, .075), roundCone(x, y, z, LX, .98, 0, LX, .075, 0, .075, .075), .02);
-  let lower = smin(torso, legs, .16);
+  let lower = smin(torso, legs, .08);
   lower = smax(lower, Math.abs(x) - W, .02);
   lower = smax(lower, Math.abs(z) - (D * TR / W - .005), .02);
   const body = smin(lower, yoke, .1);
@@ -406,9 +406,11 @@ function runnerGeometry(boneList) {
     const cl = u => Math.min(1, Math.max(0, u)), left = P[v] < 0, sh = left ? shL : shR, el = left ? elL : elR;
     if (ax > .19 && ay > .86 && ay < 1.31) { const k = cl((1.28 - ay) / .05); w = [[el, k], [sh, 1 - k]]; }
     else if (ay >= 1.31 && (ax > .19 || (ax > .15 && ay > 1.5))) { const k = cl((ax - .15) / .045); w = [[sh, k], [chest, 1 - k]]; }
+    else if (ay < 1.06 && ax <= .19) { const u = cl((1.06 - ay) / .2), k = u * u * (3 - 2 * u), sL = cl(.5 - P[v] / .03); w = [[hips, 1 - k], [hipL, k * sL], [hipR, k * (1 - sL)]].filter(q => q[1] > 1e-3); if (ay < .62) w = [[left ? hipL : hipR, (ay - .4) / .22], [left ? kneeL : kneeR, 1 - (ay - .4) / .22]].map(q => [q[0], cl(q[1])]); if (ay < .4) w = [[left ? kneeL : kneeR, 1]]; }
     const sum = w.reduce((a, q) => a + q[1], 0) || 1;
     SI[o] = boneList.indexOf(w[0][0]); SW[o] = w[0][1] / sum;
     if (w[1]) { SI[o + 1] = boneList.indexOf(w[1][0]); SW[o + 1] = w[1][1] / sum; }
+    if (w[2]) { SI[o + 2] = boneList.indexOf(w[2][0]); SW[o + 2] = w[2][1] / sum; }
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(N, 3));
@@ -444,8 +446,8 @@ function legIK(R, hip, knee, side, tz, ty) {
 }
 function gait(speed) {
   const w = Math.min(1, speed / 1.2), r = Math.min(1, Math.max(0, (speed - 3.4) / 2.6)), run = r * r * (3 - 2 * r);
-  const X = (.28 + .045 * speed) * w, duty = .6 - .24 * run;
-  return { X, duty, run, w, lift: (.045 + .1 * run) * w, omega: X > 1e-3 ? Math.PI * duty * speed / X : 0 };
+  const X = (.25 + .04 * speed) * w, duty = .6 - .24 * run;
+  return { X, duty, run, w, lift: (.035 + .08 * run) * w, omega: X > 1e-3 ? Math.PI * duty * speed / X : 0 };
 }
 function footTarget(u, g) {
   if (u < g.duty) { const s = u / g.duty; return [g.X * (1 - 2 * s), 0, true]; }
@@ -465,14 +467,14 @@ function animateRunner(R, dt, speed, grounded, t) {
     R.phase = ((R.phase || 0) + dt * g.omega) % (Math.PI * 2);
     const uL = R.phase / (Math.PI * 2), uR = (uL + .5) % 1;
     const [zl, yl, stL] = footTarget(uL, g), [zr, yr, stR] = footTarget(uR, g);
-    const reach = (THIGH + SHIN) * .985, st = stL && stR ? Math.max(Math.abs(zl), Math.abs(zr)) : stL ? Math.abs(zl) : stR ? Math.abs(zr) : 0;
-    const lean = .03 + .12 * g.run, flex = (.02 + .02 * g.run) * g.w;
+    const lean = .02 + .07 * g.run, flex = (.006 + .02 * g.run) * g.w, fwd = .03 * g.w;
+    const hz = fwd - Math.sin(R.body.rotation.x) * R.hips.position.y, reach = (THIGH + SHIN) * .992, st = stL && stR ? Math.max(Math.abs(zl + hz), Math.abs(zr + hz)) : stL ? Math.abs(zl + hz) : stR ? Math.abs(zr + hz) : 0;
     let bob = stL || stR ? Math.min(-flex, Math.sqrt(Math.max(0, reach * reach - st * st)) + FOOT_Y - R.hips.position.y) : -flex;
     if (k < .03) bob += Math.sin(t * 2.2) * .008;
     R.body.rotation.x += (lean - R.body.rotation.x) * Math.min(1, dt * 6);
-    const cur = R.body.position.y; R.body.position.y = cur + (bob - cur) * Math.min(1, dt * (bob < cur ? 24 : 9));
+    const cur = R.body.position.y; R.body.position.y = cur + (bob - cur) * Math.min(1, dt * (bob < cur ? 24 : 12));
     R.body.updateMatrix(); _ikM.copy(R.body.matrix).invert();
-    legIK(R, R.hipL, R.kneeL, -1, zl, yl + FOOT_Y); legIK(R, R.hipR, R.kneeR, 1, zr, yr + FOOT_Y);
+    legIK(R, R.hipL, R.kneeL, -1, zl + fwd, yl + FOOT_Y); legIK(R, R.hipR, R.kneeR, 1, zr + fwd, yr + FOOT_Y);
     const sw = Math.cos(R.phase) * (.22 + .45 * g.run) * g.w, f = Math.min(1, dt * 12), L = (o, p, v) => { o.rotation[p] += (v - o.rotation[p]) * f; };
     let al = sw, ar = -sw;
     if (k < .03) { const br = Math.sin(t * 2.2) * .03; al = br; ar = -br; }
