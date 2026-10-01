@@ -533,50 +533,26 @@ function aimTracker() {
   };
 }
 const aimRay = (cam, p) => { const r = new THREE.Raycaster(); r.setFromCamera(new THREE.Vector2(p.x / frame.clientWidth * 2 - 1, 1 - p.y / frame.clientHeight * 2), cam); return r.ray; };
-const AIM_LINE = new THREE.Color(0x5d55c9), AIM_LINE_NO = new THREE.Color(0xe8437a), AIM_DOTS = 22, AIM_R = .12, AIM_W = .06;
-function dashLine() {
-  return new THREE.ShaderMaterial({ side: THREE.BackSide, transparent: true, uniforms: { col: { value: AIM_LINE.clone() }, len: { value: 1 }, t: { value: 0 } },
-    vertexShader: 'varying float vU; void main() { vU = uv.x; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
-    fragmentShader: 'uniform vec3 col; uniform float len, t; varying float vU; void main() { if (fract(vU * len / .42 - t) > .56) discard; gl_FragColor = linearToOutputTexel(vec4(col, 1.)); }' });
-}
-const AIM_DEPTH = new THREE.MeshBasicMaterial({ colorWrite: false, transparent: true });
+const AIM_DOTS = 22, AIM_R = .12, AIM_RING = .34;
 function aimGuide() {
   const g = new THREE.Group(); g.visible = false;
-  const bead = silver(false); bead.transparent = true;
-  const dots = new THREE.InstancedMesh(new THREE.SphereGeometry(AIM_R * .92, 12, 8), bead, AIM_DOTS);
-  dots.frustumCulled = false; dots.renderOrder = 20; g.add(dots);
-  const pathDepth = new THREE.Mesh(new THREE.BufferGeometry(), AIM_DEPTH), pathLine = new THREE.Mesh(new THREE.BufferGeometry(), dashLine());
-  pathDepth.renderOrder = 21; pathLine.renderOrder = 22; pathDepth.frustumCulled = pathLine.frustumCulled = false; g.add(pathDepth, pathLine);
-  const ringR = .34, ringT = .06;
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(ringR, ringT, 10, 40), silver(false)); ring.material.transparent = true; ring.renderOrder = 20;
-  const ringDepth = new THREE.Mesh(ring.geometry, AIM_DEPTH); ringDepth.renderOrder = 21;
-  const ringLine = new THREE.Mesh(new THREE.TorusGeometry(ringR, ringT + AIM_W, 10, 40), dashLine()); ringLine.renderOrder = 22;
-  ringLine.material.uniforms.len.value = Math.PI * 2 * ringR;
-  const mark = new THREE.Group(); mark.add(ring, ringDepth, ringLine); mark.rotation.x = -Math.PI / 2; g.add(mark);
+  const bead = silver(false), dots = new THREE.InstancedMesh(new THREE.SphereGeometry(AIM_R * .92, 12, 8), bead, AIM_DOTS);
+  dots.frustumCulled = false; g.add(dots);
+  const ringT = .06, mark = new THREE.Mesh(new THREE.TorusGeometry(AIM_RING, ringT, 10, 40), silver(false)); mark.rotation.x = -Math.PI / 2; g.add(mark);
   const M = new THREE.Matrix4(), P = new THREE.Vector3(), Q = new THREE.Quaternion(), S = new THREE.Vector3();
   const OK_TINT = new THREE.Color(0xe6e6ec), NO_TINT = new THREE.Color(0xffb8cc);
   return { g,
-    show(path, end, ok, t) {
+    show(path, end, ok, t, trim = 0) {
       g.visible = true;
-      const line = ok ? AIM_LINE : AIM_LINE_NO, tint = ok ? OK_TINT : NO_TINT;
-      bead.color.copy(tint); ring.material.color.copy(tint);
-      [pathLine, ringLine].forEach(m => { m.material.uniforms.col.value.copy(line); m.material.uniforms.t.value = t * 1.6; });
+      const tint = ok ? OK_TINT : NO_TINT; bead.color.copy(tint); mark.material.color.copy(tint);
       const L = [0]; for (let i = 1; i < path.length; i++) L.push(L[i - 1] + path[i].distanceTo(path[i - 1]));
-      const total = L[L.length - 1] || 0, shift = (t * .9) % 1; let j = 1;
+      const total = Math.max(0, (L[L.length - 1] || 0) - trim), shift = (t * .9) % 1; let j = 1;
       for (let i = 0; i < AIM_DOTS; i++) {
         const s = (i + shift) / AIM_DOTS * total; j = 1; while (j < path.length - 1 && L[j] < s) j++;
         const k = (s - L[j - 1]) / ((L[j] - L[j - 1]) || 1); P.lerpVectors(path[j - 1], path[j], Math.min(1, Math.max(0, k)));
         S.setScalar(.6 + .4 * (1 - Math.abs(s / (total || 1) - .5) * 2)); M.compose(P, Q, S); dots.setMatrixAt(i, M);
       }
       dots.instanceMatrix.needsUpdate = true;
-      pathDepth.geometry.dispose(); pathLine.geometry.dispose();
-      const pts = path.filter((p, i) => i === 0 || p.distanceToSquared(path[i - 1]) > 1e-4);
-      if (pts.length > 1 && total > .05) {
-        const curve = new THREE.CatmullRomCurve3(pts), seg = Math.min(96, Math.max(12, Math.round(total * 5)));
-        pathDepth.geometry = new THREE.TubeGeometry(curve, seg, AIM_R, 8, false);
-        pathLine.geometry = new THREE.TubeGeometry(curve, seg, AIM_R + AIM_W, 8, false);
-        pathLine.material.uniforms.len.value = total;
-      } else { pathDepth.geometry = new THREE.BufferGeometry(); pathLine.geometry = new THREE.BufferGeometry(); }
       mark.position.set(end.x, end.y + ringT + .01, end.z); mark.rotation.z = t * .6; mark.scale.setScalar(1 + Math.sin(t * 7) * .08);
     },
     hide() { g.visible = false; } };
@@ -616,7 +592,7 @@ function headTravel(R, o) {
     return { path, end: p.clone().setY(p.y - RADIUS), ok };
   }
   return {
-    aim(kind, facing, t, dest) { if (guide.g.parent !== R.root.parent) R.root.parent.add(guide.g); const r = preview(kind, facing, dest); guide.show(r.path, r.end, r.ok, t); },
+    aim(kind, facing, t, dest) { if (guide.g.parent !== R.root.parent) R.root.parent.add(guide.g); const r = preview(kind, facing, dest); guide.show(r.path, r.end, r.ok, t, kind === 'roll' ? AIM_RING : 0); },
     unaim() { guide.hide(); },
     active: () => !!st,
     kind: () => st && st.kind,

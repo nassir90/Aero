@@ -25,7 +25,7 @@ The bar under the game steps through each scene. You can also jump straight to o
 | ![Memory player](docs/memory_player.jpg) | ![The climb](docs/climb.jpg) |
 | **8. Memory player.** A draggable media player window over the level. | **10. The climb.** Pillars fading into white, four memories to collect, and a pipe home. |
 | ![Aiming a head throw](docs/climb_aim.jpg) | ![Rolling into the pipe](docs/climb_pipe_in.jpg) |
-| Tap **2** to throw your head to the next platform. Hold 2 and move the mouse to aim at a spot, then release the key or click. The path shows as silver beads inside a dashed outline; a pink outline means the head would fall. | The pipe lies on the top plaza. Once all four memories are found, roll your head into it with **1**. |
+| Tap **2** to throw your head to the next platform. Hold 2 and move the mouse to aim at a spot, then release the key or click. The path shows as silver beads ending at a ring; pink beads mean the head would fall. | The pipe lies on the top plaza. Once all four memories are found, roll your head into it with **1**. |
 
 ## Controls
 
