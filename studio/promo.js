@@ -3,17 +3,15 @@ const FPS = 30, V = (x, y, z) => new THREE.Vector3(x, y, z);
 const fr = document.getElementById('frame');
 const css = document.createElement('style');
 css.textContent = `
-#promo { position: absolute; inset: 0; pointer-events: none; z-index: 60; }
+#promo { position: absolute; inset: 0; pointer-events: none; }
 #promo .pr-hook { position: absolute; left: 6%; right: 6%; top: 8%; text-align: center; font: 700 2.5em/1.18 Silkscreen, monospace; color: #fff; text-shadow: 0 .1em 0 #2f34c9, 0 0 .45em rgba(10,8,40,.65); text-wrap: balance; }
-#promo .pr-cap { position: absolute; left: 7%; right: 7%; top: 64%; text-align: center; text-wrap: balance; }
+#promo .pr-cap { position: absolute; left: 7%; right: 7%; top: 79%; text-align: center; text-wrap: balance; }
 #promo .pr-cap span { display: inline; font: 800 1.7em/1.45 'Open Sans', sans-serif; color: #fff; background: rgba(14,12,40,.62); padding: .12em .45em; box-decoration-break: clone; -webkit-box-decoration-break: clone; border-radius: .25em; }
 #promo .pr-card { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 0 10%; background: #1d1c22; color: #eeedf1; text-align: center; font: 600 2.6em/1.3 'Open Sans', sans-serif; text-wrap: balance; }
-#promo .pr-end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .7em; background: rgba(18,14,52,.6); text-align: center; }
-#promo .pr-end b { font: 700 6.4em/1 Silkscreen, monospace; color: #f2f1f6; text-shadow: 0 .1em 0 #2f34c9; letter-spacing: .04em; }
-#promo .pr-end p { margin: 0; font: 700 1.5em/1.2 Silkscreen, monospace; color: #fff; }
-#promo .pr-end .pr-url { font: 700 1.9em/1 Silkscreen, monospace; color: #fff; background: #2f34c9; padding: .35em .6em; }
+#promo .pr-end { position: absolute; left: 0; right: 0; top: 53%; display: flex; flex-direction: column; align-items: center; gap: .8em; text-align: center; }
+#promo .pr-end p { margin: 0; font: 700 1.5em/1.2 Silkscreen, monospace; color: #fff; text-shadow: 0 0 .4em rgba(10,8,60,.7); }
+#promo .pr-end .pr-url { font: 700 2em/1 Silkscreen, monospace; color: #000; background: #f2f1f6; padding: .4em .7em; mix-blend-mode: screen; }
 .shape-square #promo .pr-hook { top: 6%; font-size: 2.1em; }
-.shape-square #promo .pr-end b { font-size: 5em; }
 `;
 document.head.appendChild(css);
 const layer = document.createElement('div'); layer.id = 'promo'; fr.appendChild(layer);
@@ -40,7 +38,20 @@ const copyScene = {
   crewOf4() { this.selectAll(); this.copyTo(V(2, 0, -1)); this.selectAll(); this.copyTo(V(-1.5, 0, .8)); step(.6); },
 };
 const at = (lt, t) => Math.round(lt * FPS) === Math.round(t * FPS);
-const dragSelect = (lt, t0, t1, a, b) => {
+const runnersOnScreen = () => { const out = []; act().scene.traverse(o => { if (o.isSkinnedMesh && o.material.type === 'MeshStandardMaterial' && o.parent.parent.visible) out.push(o.parent.parent); }); return out; };
+const boxAround = (pad = .02) => {
+  let x0 = 1, y0 = 1, x1 = 0, y1 = 0;
+  for (const r of runnersOnScreen()) for (const dx of [-.42, .42]) for (const dz of [-.3, .3]) for (const y of [-.05, 2.2]) {
+    const p = V(r.position.x + dx, r.position.y + y, r.position.z + dz).project(act().cam), fx = p.x * .5 + .5, fy = -p.y * .5 + .5;
+    x0 = Math.min(x0, fx); y0 = Math.min(y0, fy); x1 = Math.max(x1, fx); y1 = Math.max(y1, fy);
+  }
+  return [[x0 - pad, y0 - pad], [x1 + pad, y1 + pad]];
+};
+let dragBox = null;
+const dragSelect = (lt, t0, t1) => {
+  if (at(lt, t0)) dragBox = boxAround();
+  if (!dragBox) return;
+  const [a, b] = dragBox;
   if (at(lt, t0)) ptr(ov(), 'pointerdown', atF(a[0], a[1]));
   if (lt > t0 && lt < t1 && !at(lt, t0) && !at(lt, t1)) { const k = (lt - t0) / (t1 - t0); ptr(ov(), 'pointermove', atF(lerp(a[0], b[0], k), lerp(a[1], b[1], k))); }
   if (at(lt, t1)) ptr(ov(), 'pointerup', atF(b[0], b[1]));
@@ -70,7 +81,7 @@ const SEG = {
       const S = act();
       if (at(lt, .05) && S.login) S.login();
       if (at(lt, .55)) tap('KeyW');
-      dragSelect(lt, .7, 1.3, [.12, .2], [.88, .86]);
+      dragSelect(lt, .7, 1.3);
       if (at(lt, 1.5)) document.querySelector('#ctx button[data-a="copy"]').click();
       if (lt > 1.55 && lt < 2.4) ptr(ov(), 'pointermove', atW(V(lerp(-1.6, 1.8, (lt - 1.55) / .85), 0, .6)));
       if (at(lt, 2.4)) ptr(ov(), 'pointerdown', atW(V(1.8, 0, .6)));
@@ -90,8 +101,7 @@ const SEG = {
     } },
   halcyon: (dur, vo, cap) => ({ dur, vo, cap, setup() { go('reveal'); step(.6); } }),
   end: (dur, vo) => ({ dur, vo, end: true,
-    setup() { go('title'); step(1); document.getElementById('titleOv').style.visibility = 'hidden'; },
-    done() { document.getElementById('titleOv').style.visibility = ''; } }),
+    setup() { go('title'); step(1); } }),
 
   mergeHook: (dur, vo, hook) => ({ dur, vo, hook,
     setup() { copyScene.fresh(); copyScene.crewOf4(); ptr(ov(), 'pointermove', atW(V(-1, 0, -1))); step(.05); key('Digit2', true); step(.05); },
@@ -102,11 +112,11 @@ const SEG = {
   copyTwice: { dur: 4.3, vo: 'v2_2',
     setup() {},
     tick(lt) {
-      dragSelect(lt, .15, .7, [.05, .1], [.95, .9]);
+      dragSelect(lt, .15, .7);
       if (at(lt, .85)) document.querySelector('#ctx button[data-a="copy"]').click();
       if (lt > .9 && lt < 1.55) ptr(ov(), 'pointermove', atW(V(lerp(0, 2, (lt - .9) / .65), 0, lerp(0, -1, (lt - .9) / .65))));
       if (at(lt, 1.6)) ptr(ov(), 'pointerdown', atW(V(2, 0, -1)));
-      dragSelect(lt, 1.9, 2.5, [.03, .05], [.97, .95]);
+      dragSelect(lt, 1.9, 2.5);
       if (at(lt, 2.65)) document.querySelector('#ctx button[data-a="copy"]').click();
       if (lt > 2.7 && lt < 3.35) ptr(ov(), 'pointermove', atW(V(lerp(0, -1.6, (lt - 2.7) / .65), 0, lerp(0, .9, (lt - 2.7) / .65))));
       if (at(lt, 3.4)) ptr(ov(), 'pointerdown', atW(V(-1.6, 0, .9)));
@@ -145,6 +155,7 @@ const SEG = {
 const VIDEOS = {
   v1_whole: [SEG.climbHook, SEG.titleDrop(3.2, 'v1_2'), SEG.card(2.6, 'v1_3', 'Did anyone ever log out?'), SEG.copyLogin,
     SEG.arrival(3.7, 'v1_5'), SEG.lake, SEG.player, SEG.climbPipe, SEG.halcyon(2.4, 'v1_8'), SEG.end(6.8, 'end')],
+  v1_intro: [SEG.climbHook, SEG.titleDrop(3.2, 'v1_2'), SEG.card(2.6, 'v1_3', 'Did anyone ever log out?')],
   v2_merge: [SEG.mergeHook(3.4, 'v2_1', '4 of me → 1 of me'), SEG.copyTwice, SEG.aimConverge, SEG.mergeRelease, SEG.formation, SEG.end(6.8, 'end')],
   sq_sea: [SEG.titleDrop(6, null, null, false), SEG.end(2.2)],
   sq_merge: [SEG.sqMerge, SEG.end(2.2)],
@@ -161,6 +172,7 @@ window.__promo = {
   load(name, opts = {}) {
     window.requestAnimationFrame = () => 0;
     segs = VIDEOS[name]; starts = []; let t = 0;
+    if (opts.durs) segs.forEach((sg, i) => { if (opts.durs[i]) sg.dur = opts.durs[i]; });
     for (const s of segs) { starts.push(t); t += s.dur; }
     cur = -1; this.silent = !!opts.silent;
     return { frames: Math.round(t * FPS), timeline: segs.map((s, i) => ({ start: starts[i], dur: s.dur, vo: s.vo || null })) };
@@ -176,7 +188,7 @@ window.__promo = {
       if (s.hook) layer.appendChild(el('pr-hook', s.hook));
       const capText = s.cap || (!this.silent && s.vo && CAPS[s.vo]);
       if (capText) layer.appendChild(el('pr-cap', `<span>${capText}</span>`));
-      if (s.end) layer.appendChild(el('pr-end', '<b>AERO</b><p>you can play it at</p><div class="pr-url">mpts.ie/games/aero</div>'));
+      if (s.end) layer.appendChild(el('pr-end', '<p>you can play it at</p><div class="pr-url">mpts.ie/games/aero</div>'));
     }
     const lt = Math.round((t - starts[k]) * FPS) / FPS;
     if (s.tick) s.tick(lt);

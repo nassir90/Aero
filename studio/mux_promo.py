@@ -4,7 +4,7 @@ frames, vo_dir, music, out = sys.argv[1:5]
 size = sys.argv[5] if len(sys.argv) > 5 else None
 info = json.load(open(os.path.join(frames, 'timeline.json')))
 dur = info['frames'] / 30
-lines = [(seg['start'], os.path.join(vo_dir, seg['vo'] + '.wav')) for seg in info['timeline'] if seg['vo']]
+lines = [(0, vo_dir)] if vo_dir.endswith('.wav') else [(seg['start'], os.path.join(vo_dir, seg['vo'] + '.wav')) for seg in info['timeline'] if seg['vo']]
 
 args = ['ffmpeg', '-loglevel', 'error', '-y', '-framerate', '30', '-i', os.path.join(frames, 'f%05d.jpg')]
 vf = ['format=yuv420p'] + ([f'scale={size}:flags=lanczos'] if size else [])
@@ -15,7 +15,7 @@ else:
     for _, f in lines: args += ['-i', f]
     parts, labels = [], []
     for k, (start, _) in enumerate(lines):
-        ms = int((start + .08) * 1000)
+        ms = int((start + (0 if len(lines) == 1 else .08)) * 1000)
         parts.append(f'[{k + 2}:a]aresample=44100,adelay={ms}|{ms},volume=1.15[v{k}]'); labels.append(f'[v{k}]')
     parts.append(''.join(labels) + f'amix=inputs={len(lines)}:normalize=0,apad,atrim=0:{dur:.3f},asplit=2[vo][key]')
     parts.append(f'[1:a]atrim=0:{dur:.3f},asetpts=N/SR/TB,aresample=44100,volume=0.3,afade=t=in:d=0.5,afade=t=out:st={max(0, dur - 1.4):.3f}:d=1.4[mus]')

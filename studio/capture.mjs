@@ -21,7 +21,8 @@ await page.goto(`${BASE}?shape=${shape}&capture#s0`, { waitUntil: 'networkidle0'
 await page.evaluate(() => document.fonts.ready);
 await new Promise(r => setTimeout(r, 1500));
 await page.addScriptTag({ path: path.join(here, 'promo.js') });
-const info = await page.evaluate((n, silent) => __promo.load(n, { silent }), name, shape === '1x1');
+const durs = process.env.DURS ? process.env.DURS.split(',').map(Number) : null;
+const info = await page.evaluate((n, silent, durs) => __promo.load(n, { silent, durs }), name, shape === '1x1', durs);
 fs.writeFileSync(path.join(out, 'timeline.json'), JSON.stringify(info, null, 1));
 const n = Math.min(info.frames, upto);
 const pick = limit === Infinity ? null : new Set(Array.from({ length: limit }, (_, k) => Math.round(k * (n - 1) / (limit - 1))));

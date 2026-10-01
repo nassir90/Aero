@@ -55,8 +55,8 @@ body { margin: 0; background: var(--ground); color: var(--ink); font-family: var
 .card-line { position: absolute; left: 10%; right: 10%; top: 50%; transform: translateY(-50%); text-align: center; font: 600 2.2em/1.3 var(--sans); color: #eeedf1; text-wrap: balance; text-shadow: 0 0 2px rgba(255,255,255,.6); filter: blur(.3px); }
 .skip-hint { position: absolute; right: 3%; bottom: 3%; font: .8em var(--pixel); color: #5d5a66; }
 
-.plate { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); background: #f2f1f6; padding: .5em 1.1em; box-shadow: 0 .3em 0 rgba(0,0,40,.35); }
-.plate b { display: block; font: 700 6em/1 var(--pixel); color: #2f34c9; letter-spacing: .06em; }
+.plate { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); background: #f2f1f6; padding: .5em 1.1em; mix-blend-mode: screen; }
+.plate b { display: block; font: 700 6em/1 var(--pixel); color: #000; letter-spacing: .06em; }
 
 .name { position: absolute; left: 0; right: 0; top: 4%; text-align: center; }
 .name b { display: block; font: 700 4.4em/1 var(--pixel); letter-spacing: .04em; color: #ff5ad6; text-shadow: .08em 0 0 #5b3cff, -.04em 0 0 #36d6ff; }
@@ -432,26 +432,53 @@ function makeRunner() {
   return { root, body, mesh, head, hips, spine, chest, hipL, hipR, kneeL, kneeR, shL, shR, elL, elR, handL, handR, parts: [mesh, head], phase: 0, headY: 1.93 };
 }
 const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _q = new THREE.Quaternion();
+const THIGH = .46, SHIN = .445, FOOT_Y = .075, _ik = new THREE.Vector3(), _ikM = new THREE.Matrix4();
+function legIK(R, hip, knee, side, tz, ty) {
+  _ik.set(side * .09, ty, tz).applyMatrix4(_ikM);
+  const hy = R.hips.position.y, dy = _ik.y - hy, dz = _ik.z;
+  const d = Math.min(THIGH + SHIN - 1e-3, Math.max(.05, Math.hypot(dy, dz)));
+  const kneeIn = Math.acos(Math.min(1, Math.max(-1, (THIGH * THIGH + SHIN * SHIN - d * d) / (2 * THIGH * SHIN))));
+  const alpha = Math.acos(Math.min(1, Math.max(-1, (THIGH * THIGH + d * d - SHIN * SHIN) / (2 * THIGH * d))));
+  hip.rotation.x = Math.atan2(-dz, -dy) - alpha;
+  knee.rotation.x = Math.PI - kneeIn;
+}
+function gait(speed) {
+  const w = Math.min(1, speed / 1.2), run = Math.min(1, Math.max(0, (speed - 3.6) / 2.6));
+  const X = (.16 + .045 * speed) * w, duty = .58 - .2 * run;
+  return { X, duty, lift: (.07 + .11 * Math.min(1, speed / 6.2)) * w, omega: X > 1e-3 ? Math.PI * duty * speed / X : 0 };
+}
+function footTarget(u, g) {
+  if (u < g.duty) { const s = u / g.duty; return [g.X * (1 - 2 * s), 0, true]; }
+  const s = (u - g.duty) / (1 - g.duty), m = -2 * g.X * (1 - g.duty) / g.duty, s2 = s * s, s3 = s2 * s;
+  const z = (2 * s3 - 3 * s2 + 1) * -g.X + (s3 - 2 * s2 + s) * m + (-2 * s3 + 3 * s2) * g.X + (s3 - s2) * m;
+  return [z, g.lift * Math.sin(Math.PI * s), false];
+}
 function animateRunner(R, dt, speed, grounded, t) {
   const k = Math.min(1, speed / 6.2);
-  if (k > .03) R.phase += dt * (5 + 6.5 * k);
-  const s = Math.sin(R.phase), c = Math.cos(R.phase);
-  let hl, hr, kl, kr, al, ar, el, er, lean, bob;
-  if (grounded) {
-    const amp = .12 + .78 * k;
-    hl = -s * amp; hr = s * amp;
-    kl = Math.max(0, c) * amp * 1.5 + .05; kr = Math.max(0, -c) * amp * 1.5 + .05;
-    al = s * amp * .9; ar = -s * amp * .9;
-    el = -.25 - .9 * k; er = el;
-    lean = .04 + .2 * k; bob = Math.abs(c) * .07 * k;
-    if (k < .03) { const br = Math.sin(t * 2.2) * .03; al = br; ar = -br; bob = Math.sin(t * 2.2) * .012; }
+  if (!grounded) {
+    const f = Math.min(1, dt * 16), L = (o, p, v) => { o.rotation[p] += (v - o.rotation[p]) * f; };
+    L(R.hipL, 'x', -.7); L(R.hipR, 'x', .35); L(R.kneeL, 'x', .9); L(R.kneeR, 'x', .4);
+    L(R.shL, 'x', -2.2); L(R.shR, 'x', -1.6); L(R.elL, 'x', -.4); L(R.elR, 'x', -.6); L(R.body, 'x', .1);
+    R.body.position.y += (0 - R.body.position.y) * f;
   } else {
-    hl = -.7; hr = .35; kl = .9; kr = .4; al = -2.2; ar = -1.6; el = -.4; er = -.6; lean = .1; bob = 0;
+    const g = gait(speed);
+    R.phase = ((R.phase || 0) + dt * g.omega) % (Math.PI * 2);
+    const uL = R.phase / (Math.PI * 2), uR = (uL + .5) % 1;
+    const [zl, yl, stL] = footTarget(uL, g), [zr, yr, stR] = footTarget(uR, g);
+    const reach = (THIGH + SHIN) * .985, st = stL && stR ? Math.max(Math.abs(zl), Math.abs(zr)) : stL ? Math.abs(zl) : stR ? Math.abs(zr) : 0;
+    const lean = .04 + .16 * k;
+    let bob = Math.sqrt(Math.max(0, reach * reach - st * st)) + FOOT_Y - R.hips.position.y;
+    if (!stL && !stR) bob = Math.min(.04, bob + .05 * k);
+    if (k < .03) bob += Math.sin(t * 2.2) * .008;
+    R.body.rotation.x += (lean - R.body.rotation.x) * Math.min(1, dt * 8);
+    R.body.position.y = Math.min(0, bob);
+    R.body.updateMatrix(); _ikM.copy(R.body.matrix).invert();
+    legIK(R, R.hipL, R.kneeL, -1, zl, yl + FOOT_Y); legIK(R, R.hipR, R.kneeR, 1, zr, yr + FOOT_Y);
+    const sw = Math.sin(R.phase) * (.15 + .7 * k), f = Math.min(1, dt * 16), L = (o, p, v) => { o.rotation[p] += (v - o.rotation[p]) * f; };
+    let al = sw, ar = -sw;
+    if (k < .03) { const br = Math.sin(t * 2.2) * .03; al = br; ar = -br; }
+    L(R.shL, 'x', al); L(R.shR, 'x', ar); L(R.elL, 'x', -.25 - .9 * k); L(R.elR, 'x', -.25 - .9 * k);
   }
-  const f = Math.min(1, dt * 16), L = (o, p, v) => { o.rotation[p] += (v - o.rotation[p]) * f; };
-  L(R.hipL, 'x', hl); L(R.hipR, 'x', hr); L(R.kneeL, 'x', kl); L(R.kneeR, 'x', kr);
-  L(R.shL, 'x', al); L(R.shR, 'x', ar); L(R.elL, 'x', el); L(R.elR, 'x', er); L(R.body, 'x', lean);
-  R.body.position.y += (bob - R.body.position.y) * f;
   if (R.head.parent === R.root) {
     R.root.updateMatrixWorld(true);
     const c = R.chest.getWorldPosition(_v1), up = _v2.set(0, 1, 0).applyQuaternion(R.chest.getWorldQuaternion(_q));
@@ -597,7 +624,7 @@ function aimTracker() {
   };
 }
 const aimRay = (cam, p) => { const r = new THREE.Raycaster(); r.setFromCamera(new THREE.Vector2(p.x / frame.clientWidth * 2 - 1, 1 - p.y / frame.clientHeight * 2), cam); return r.ray; };
-const AIM_DOTS = 22, AIM_R = .12, AIM_RING = .34;
+const AIM_DOTS = 22, AIM_R = .12, AIM_RING = .34, AIM_PLANE = .09;
 function aimGuide() {
   const g = new THREE.Group(); g.visible = false;
   const bead = silver(false), dots = new THREE.InstancedMesh(new THREE.SphereGeometry(AIM_R * .92, 12, 8), bead, AIM_DOTS);
@@ -617,7 +644,7 @@ function aimGuide() {
         S.setScalar(.6 + .4 * (1 - Math.abs(s / (total || 1) - .5) * 2)); M.compose(P, Q, S); dots.setMatrixAt(i, M);
       }
       dots.instanceMatrix.needsUpdate = true;
-      mark.position.set(end.x, end.y + ringT + .01, end.z); mark.rotation.z = t * .6; mark.scale.setScalar(1 + Math.sin(t * 7) * .08);
+      mark.position.set(end.x, end.y + AIM_PLANE, end.z); mark.rotation.z = t * .6; mark.scale.setScalar(1 + Math.sin(t * 7) * .08);
     },
     hide() { g.visible = false; } };
 }
@@ -641,7 +668,7 @@ function headTravel(R, o) {
       for (let i = 0; i <= 28; i++) { const u = i / 28, p = new THREE.Vector3().lerpVectors(from, end, u); p.y += Math.sin(Math.PI * u) * arc; path.push(p); }
       return { path, end: end.clone().setY(end.y - RADIUS), ok: !!to };
     }
-    const p = from.clone(), g0 = o.ground(from.x, from.z, from.y) ?? from.y - 2; p.y = g0 + RADIUS; path.push(from.clone(), p.clone());
+    const p = from.clone(), g0 = o.ground(from.x, from.z, from.y) ?? from.y - 2; p.y = g0 + RADIUS; path.push(p.clone());
     let v = pl.v, vy = 0, ok = true; const dt = 1 / 60;
     for (let i = 0; i < 400; i++) {
       p.addScaledVector(dir, v * dt); if (o.bounds(p)) v *= .3; v = Math.max(0, v - 4.2 * dt);
@@ -653,6 +680,7 @@ function headTravel(R, o) {
       if (v < .4 && vy === 0) break;
     }
     path.push(p.clone());
+    path.forEach(q => { q.y -= RADIUS - AIM_PLANE; });
     return { path, end: p.clone().setY(p.y - RADIUS), ok };
   }
   return {
