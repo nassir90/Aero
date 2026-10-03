@@ -1,0 +1,69 @@
+{
+ "duration": 47.44,
+ "lines": [
+  {
+   "line": "Aero needed a page to live on.",
+   "start": 0.0,
+   "end": 2.366
+  },
+  {
+   "line": "At first, the page was just the game on a dark background.",
+   "start": 2.759,
+   "end": 6.033
+  },
+  {
+   "line": "Then we added a scroll of square clips, each one rendered from the game in a square shape.",
+   "start": 6.873,
+   "end": 11.877
+  },
+  {
+   "line": "The sky behind them is a generated image, and its top edge is uneven, with clouds in the corners.",
+   "start": 12.795,
+   "end": 18.962
+  },
+  {
+   "line": "A flat blue band above it would leave a visible seam.",
+   "start": 19.85,
+   "end": 22.719
+  },
+  {
+   "line": "So the image fades in through a gradient mask, over a blue sampled from its own top edge.",
+   "start": 23.056,
+   "end": 28.592
+  },
+  {
+   "line": "The clips only play while they are on screen, and the game waits at the bottom, sitting on the clouds.",
+   "start": 29.691,
+   "end": 35.057
+  },
+  {
+   "line": "The whole site is a single HTML file, served by a Cloudflare Worker.",
+   "start": 35.698,
+   "end": 41.393
+  },
+  {
+   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
+   "start": 42.132,
+   "end": 47.036
+  }
+ ],
+ "heard": [
+  "Aero needed a page to live on.",
+  "At first, the page was just the game on a dark background.",
+  "Then we added a scroll of square clips.",
+  "each one rendered from the game in a square shape.",
+  "The sky behind them is a generated image.",
+  "And its top edge is uneven.",
+  "with clouds in the corners.",
+  "A flat blue band above it would leave a visible seam.",
+  "So the image fades in through a gradient mask over a blue sampled from its own top edge.",
+  "The clips only play while they are on screen.",
+  "And the game waits at the bottom, sitting on the clouds.",
+  "The whole site is a single HTML file.",
+  "served by a Cloudflare worker.",
+  "Arrow.",
+  "You can play it at MP3.",
+  "I I",
+  "/games/arrow"
+ ]
+}

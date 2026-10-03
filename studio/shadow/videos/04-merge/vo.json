@@ -1,0 +1,68 @@
+{
+ "duration": 55.0,
+ "lines": [
+  {
+   "line": "When you throw four heads at one spot, the four bodies merge into one.",
+   "start": 0.0,
+   "end": 5.193
+  },
+  {
+   "line": "The first version picked a leader, and everyone else snapped to its position, its facing and its step.",
+   "start": 6.046,
+   "end": 12.181
+  },
+  {
+   "line": "The leader was whoever came first in the list, so the merge always leaned toward that runner.",
+   "start": 13.014,
+   "end": 18.23
+  },
+  {
+   "line": "Now the crew meets in the middle, at the average position, the average step and the average facing.",
+   "start": 19.053,
+   "end": 25.086
+  },
+  {
+   "line": "Angles need care. Three hundred and fifty degrees and ten degrees should average to north, but adding them and halving gives a hundred and eighty, which is south.",
+   "start": 26.018,
+   "end": 36.449
+  },
+  {
+   "line": "So each angle becomes an arrow on a circle, the arrows are added together, and their sum points the right way.",
+   "start": 37.138,
+   "end": 43.794
+  },
+  {
+   "line": "The walk cycle is an angle too, so the merged runner lands in step.",
+   "start": 44.679,
+   "end": 49.457
+  },
+  {
+   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
+   "start": 50.07,
+   "end": 54.684
+  }
+ ],
+ "heard": [
+  "When you throw four heads at one spot,",
+  "The four bodies merge into one.",
+  "The first version picked a leader and everyone else snapped to its position.",
+  "It's facing and it's step.",
+  "The leader was whoever came first in the list.",
+  "So the merge always leaned toward that runner.",
+  "Now the crew meets in the middle.",
+  "at the average position.",
+  "The average step.",
+  "and the average facing.",
+  "Angles need care.",
+  "350 degrees and 10 degrees should average to north.",
+  "but adding them and having gives 180.",
+  "Which is south?",
+  "So each angle becomes an arrow on a circle.",
+  "The arrows are added together.",
+  "And there's some points the right way.",
+  "The walk cycle is an angle two.",
+  "So the merged runner lands in step.",
+  "Arrow.",
+  "You can play it at mpts.ie/games/arrow."
+ ]
+}
