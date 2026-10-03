@@ -52,6 +52,7 @@ class H(http.server.BaseHTTPRequestHandler):
                 if rest in ("games/aero/", "games/aero/index.html"): return self.send(at_rev(rev), "text/html; charset=utf-8")
                 p = safe(SITE, rest)
             elif parts[0] == "games": p = safe(SITE, rel)
+            elif parts[0] == "studio": p = safe(os.path.dirname(ROOT), "/".join(parts[1:]))
             else: p = safe(ROOT, rel)
             if os.path.isdir(p): p = os.path.join(p, "index.html")
         except (ValueError, subprocess.CalledProcessError):

@@ -527,6 +527,7 @@ async function run(id, opts = {}) {
         L._prev = prevMode; if (STYLE === 'ink') inkDiagram(L, meta.mode); else diagram(g, L, tl, meta.mode);
       }
       else if (L.type === 'draw') L.fn(g, tl, { W, H, C, SANS, MONO, SERIF, ease, clips });
+      else if (L.type === 'inkdraw') L.fn(ig, tl, { W, H, SERIF, ease, clamp, tbox, wrap });
     }
     if (STYLE === 'ink') {
       inkTitle(E, t);

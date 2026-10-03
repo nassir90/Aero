@@ -12,8 +12,8 @@
   "say": "Now the crew meets in the middle, at the average position, the average step and the average facing."
  },
  {
-  "say": "Angles need care. Three hundred and fifty degrees and ten degrees should average to north, but adding them and halving gives a hundred and eighty, which is south.",
-  "sub": "Angles need care. 350° and 10° should average to north, but adding them and halving gives 180°, which is south."
+  "say": "Angles need care. Three hundred and fifty degrees and ten degrees should average to north, but adding them and dividing by two gives a hundred and eighty, which is south.",
+  "sub": "Angles need care. 350° and 10° should average to north, but adding them and dividing by two gives 180°, which is south."
  },
  {
   "say": "So each angle becomes an arrow on a circle, the arrows are added together, and their sum points the right way."

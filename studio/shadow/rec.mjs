@@ -21,14 +21,16 @@ for (const name of names) {
   const W = d.w || 1080, H = d.h || 1920, dpr = d.dpr || 1, n = Math.round(d.dur * 30), out = path.join(here, 'clips', name);
   fs.rmSync(out, { recursive: true, force: true }); fs.mkdirSync(out, { recursive: true });
   await page.setViewport({ width: Math.round(W / dpr), height: Math.round(H / dpr), deviceScaleFactor: dpr, isMobile: !!d.mobile, hasTouch: !!d.mobile });
-  await page.goto(SINK + d.url, { waitUntil: 'networkidle0' });
+  const [base, hash = ''] = d.url.split('#'), fresh = base + (base.includes('?') ? '&' : '?') + 'r=' + Date.now() + (hash ? '#' + hash : '');
+  await page.goto('about:blank');
+  await page.goto(SINK + fresh, { waitUntil: 'networkidle0' });
   await page.evaluate(() => document.fonts.ready);
   await new Promise(r => setTimeout(r, 1500));
   await page.addScriptTag({ content: src });
   await page.evaluate(nm => window.CLIP_RUN.start(nm), name);
   const meta = [], t0 = Date.now();
   for (let f = 0; f < n; f++) {
-    meta.push(await page.evaluate(k => window.CLIP_RUN.frame(k), f));
+    meta.push(await page.evaluate(k => window.CLIP_RUN.frameAsync(k), f));
     await page.screenshot({ path: path.join(out, `f${String(f).padStart(5, '0')}.jpg`), type: 'jpeg', quality: 90 });
   }
   fs.writeFileSync(path.join(out, 'meta.json'), JSON.stringify({ fps: 30, w: W, h: H, frames: meta }));
