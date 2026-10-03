@@ -89,6 +89,8 @@ html:not(.capture) .bar p { color: #c4c8e6; }
 .more-foot { text-align: center; }
 .play-link { display: inline-block; font: 700 18px var(--pixel); color: #1c1b22; background: #ecebf2; padding: .7em 1.6em; text-decoration: none; box-shadow: 0 0 0 2px #1c1b22, 0 0 0 4px #ecebf2; }
 .more-foot p { margin: 1.2em 0 0; font: 700 15px var(--pixel); color: #1b2a6b; }
+.more-foot .credit { display: inline-block; margin-top: 1em; padding: .4em .9em; font: 600 15px/1.5 var(--sans); color: #1b2550; background: rgba(255,255,255,.75); border: 1px solid rgba(255,255,255,.9); border-radius: 6px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.more-foot .credit a { color: #2f34c9; text-decoration: underline; text-underline-offset: 2px; }
 @media (max-width: 700px) {
   html:not(.capture) body::before { background-image: url(assets/sky_tall.jpg); }
   .clip, .clip.flip { grid-template-columns: minmax(0, 1fr); }
@@ -187,7 +189,7 @@ html:not(.capture) .bar p { color: #c4c8e6; }
     <video src="media/sq_climb.mp4" poster="media/sq_climb.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Throwing the head to the next platform"></video>
     <div class="clip-text"><h3>The climb</h3><p>Hold 2 and point to throw your head to the next platform. Find four memories, then roll your head into the pipe to get home.</p></div>
   </article>
-  <footer class="more-foot"><a href="#stage" class="play-link">Play Aero ↓</a><p>mpts.ie/games/aero</p></footer>
+  <footer class="more-foot"><a href="#stage" class="play-link">Play Aero ↓</a><p>mpts.ie/games/aero</p><p class="credit">Style inspired by <a href="https://www.instagram.com/reel/Dd4YWXbojO4/" target="_blank" rel="noopener">this reel</a> by <a href="https://www.instagram.com/snaptic_/" target="_blank" rel="noopener">@snaptic_</a></p></footer>
 </section>
 
 <main class="stage" id="stage">
