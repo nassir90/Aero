@@ -1,0 +1,51 @@
+{
+ "duration": 34.56,
+ "lines": [
+  {
+   "line": "In Aero, you control the cursor as well as the runner.",
+   "start": 0.0,
+   "end": 5.188
+  },
+  {
+   "line": "Drag a box around yourself, choose copy, and click to paste, and now there are two of you.",
+   "start": 5.531,
+   "end": 13.073
+  },
+  {
+   "line": "Every copy moves when you move, and jumps when you jump.",
+   "start": 14.161,
+   "end": 18.143
+  },
+  {
+   "line": "You can also cut the whole crew, carry them as faint outlines, and drop them somewhere else.",
+   "start": 19.219,
+   "end": 27.484
+  },
+  {
+   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
+   "start": 28.17,
+   "end": 34.182
+  }
+ ],
+ "heard": [
+  "In arrow",
+  "You control the cursor.",
+  "as well as the runner.",
+  "I'm",
+  "Drag a box around yourself.",
+  "Choose copy.",
+  "and click to paste.",
+  "And now,",
+  "There are two of you.",
+  "Every copy moves when you move.",
+  "and jumps when you jump.",
+  "You can also cut the whole crew.",
+  "carry them as faint outlines.",
+  "and drop them somewhere else.",
+  "Arrow",
+  "You can play it",
+  "And",
+  "MPTS.ie",
+  "/games/arrow"
+ ]
+}

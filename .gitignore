@@ -8,3 +8,14 @@ dist/
 !.env.example
 *.log
 .DS_Store
+promo/clips/
+promo/clips_sq/
+promo/clips_test/
+promo/out/
+promo/videos/*/*.wav
+promo/videos/*/*.log
+promo/videos/*/*.err
+promo/videos/*/*.mp4
+promo/videos/*/timeline.json
+promo/videos/*/score.json*
+promo/videos/*/check.json

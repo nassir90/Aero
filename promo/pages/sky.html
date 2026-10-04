@@ -1,0 +1,29 @@
+<!doctype html><meta charset="utf-8"><style>html,body{margin:0;height:100%;overflow:hidden;background:#1b75be}canvas{width:100%;height:100%;display:block}</style>
+<canvas id="c"></canvas>
+<script>
+const Q = new URLSearchParams(location.search), MODE = Q.get('mode') || 'edge', DUR = +(Q.get('dur') || 8);
+const c = document.getElementById('c'), W = 1080, H = 1920; c.width = W; c.height = H; const g = c.getContext('2d');
+const BLUE = '#1b75be', img = new Image(); img.src = 'assets/sky_wide.jpg';
+const ease = u => u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u);
+window.__ann = []; window.__ready = false; img.onload = () => { window.__ready = true; };
+let t0 = null;
+function draw(now) {
+  if (t0 == null) t0 = now; const t = (now - t0) / 1000, s = devicePixelRatio;
+  g.fillStyle = BLUE; g.fillRect(0, 0, W, H); const ann = [];
+  if (img.complete && img.naturalWidth) {
+    if (MODE === 'edge') {
+      const k = H / img.naturalHeight, bw = img.naturalWidth * k, x0 = (bw - W) * ease(t / DUR);
+      g.drawImage(img, -x0, 0, bw, H);
+      for (const [fx, fy] of [[300, 375], [3075, 575]]) { const x = fx - x0; if (x > 80 && x < W - 80) ann.push({ k: 'call', id: 'c' + fx, x, y: fy, r: 34, dx: x < W / 2 ? 200 : -200, dy: -200, text: 'cloud in the corner' }); }
+    } else {
+      const top = 700, ih = H - top, k = ih / img.naturalHeight, bw = img.naturalWidth * k, x0 = 150 * ease(t / DUR);
+      g.drawImage(img, -x0, top, bw, ih);
+      if (MODE === 'mask') { const gr = g.createLinearGradient(0, top, 0, top + ih * .32); gr.addColorStop(0, BLUE); gr.addColorStop(1, 'rgba(27,117,190,0)'); g.fillStyle = gr; g.fillRect(0, top, W, ih * .32); }
+      ann.push({ k: 'call', id: 'seam', x: 200 - x0, y: top + (MODE === 'mask' ? 40 : 0), r: 34, dx: 220, dy: -260, text: MODE === 'mask' ? 'no seam' : 'seam' });
+    }
+  }
+  window.__ann = ann;
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
