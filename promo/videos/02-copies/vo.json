@@ -1,5 +1,5 @@
 {
- "duration": 31.92,
+ "duration": 24.757,
  "lines": [
   {
    "line": "In Aero, you can copy yourself as many times as you like.",
@@ -24,12 +24,7 @@
   {
    "line": "Hold Shift while you aim, and the crew keeps its formation.",
    "start": 20.555,
-   "end": 25.573
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 25.967,
-   "end": 31.662
+   "end": 24.405
   }
  ],
  "heard": [
@@ -45,12 +40,6 @@
   "Fall into the same step.",
   "and merge into one.",
   "Hold shift while you aim.",
-  "and the crew keeps its formation.",
-  "Arrow.",
-  "You can play it at MPTS.",
-  "the",
-  "I ate",
-  "games",
-  "/arrow"
+  "and the crew keeps its formation."
  ]
 }

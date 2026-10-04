@@ -14,14 +14,15 @@ const PROMO = read('../studio/promo.js')
   .replace("end: (dur, vo) => ({ dur, vo, end: true,\n    setup() { go('title'); step(1); } }),",
            "end: (dur, vo) => ({ dur, vo, end: true,\n    setup() { go('title'); document.querySelector('#titleOv .plate').style.visibility = 'hidden'; step(1); } }),");
 
-const LEAD0 = 1.4, LEAD = 0.35, TAIL = 0.5, TAIL_END = 1.2;
+const LEAD0 = 1.4, LEAD = 0.35, TAIL = 0.5, EXIT = 4.6;
 export function plan(id) {
-  const vo = JSON.parse(read(`videos/${id}/vo.json`)), n = vo.lines.length;
+  const vo = JSON.parse(read(`videos/${id}/vo.json`));
   const words = fs.existsSync(path.join(HERE, `videos/${id}/words.json`)) ? JSON.parse(read(`videos/${id}/words.json`)) : null;
   let t = 0; const segs = vo.lines.map((l, i) => {
-    const lead = i === 0 ? LEAD0 : LEAD, tail = i === n - 1 ? TAIL_END : TAIL, dur = lead + (l.end - l.start) + tail;
+    const lead = i === 0 ? LEAD0 : LEAD, dur = lead + (l.end - l.start) + TAIL;
     const s = { t0: t, dur, lead, line: l }; t += dur; return s;
   });
+  segs.push({ t0: t, dur: EXIT, lead: 0, line: null }); t += EXIT;
   const wordAt = (li, wi) => { const s = segs[li]; return s.t0 + s.lead + (words[li][wi].t0 - s.line.start); };
   return { segs, total: t, d: segs.map(s => s.dur), at: segs.map(s => s.t0), wordAt };
 }

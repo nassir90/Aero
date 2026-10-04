@@ -1,5 +1,5 @@
 {
- "duration": 38.44,
+ "duration": 31.385,
  "lines": [
   {
    "line": "Aero has a home on the web.",
@@ -34,12 +34,7 @@
   {
    "line": "At the bottom, sitting on the clouds, is the game itself.",
    "start": 27.202,
-   "end": 32.41
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 32.886,
-   "end": 38.12
+   "end": 30.985
   }
  ],
  "heard": [
@@ -51,9 +46,6 @@
   "A glass path runs past places you may have forgotten.",
   "The climb goes up above the clouds.",
   "At the bottom?",
-  "Sitting on the clouds is the game itself.",
-  "Arrow",
-  "You can play it at MPTs.ie.",
-  "/games/arrow"
+  "Sitting on the clouds is the game itself."
  ]
 }

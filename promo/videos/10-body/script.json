@@ -1,8 +1,17 @@
 [
- {"say": "Aero's runner is not a model from an asset store. His whole body is one formula."},
- {"say": "The formula describes rounded cylinders for the torso, the arms and the legs, and blends them together only where they should meet."},
- {"say": "To turn it into a mesh, the game samples the formula on a grid, and places a point wherever the surface passes between two samples."},
- {"say": "Eleven bones bend that mesh: the hips, the spine and the chest, and two in each arm and each leg."},
- {"say": "When his waist looked too narrow, we measured the torso at several heights, and now it keeps the same width from his hips to his chest."},
- {"say": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.", "sub": "Aero. You can play it at mpts.ie/games/aero", "style": "warm and clear"}
+ {
+  "say": "Aero's runner is not a model from an asset store. His whole body is one formula."
+ },
+ {
+  "say": "The formula describes rounded cylinders for the torso, the arms and the legs, and blends them together only where they should meet."
+ },
+ {
+  "say": "To turn it into a mesh, the game samples the formula on a grid, and places a point wherever the surface passes between two samples."
+ },
+ {
+  "say": "Eleven bones bend that mesh: the hips, the spine and the chest, and two in each arm and each leg."
+ },
+ {
+  "say": "When his waist looked too narrow, we measured the torso at several heights, and now it keeps the same width from his hips to his chest."
+ }
 ]

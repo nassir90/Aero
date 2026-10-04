@@ -1,5 +1,5 @@
 {
- "duration": 47.44,
+ "duration": 40.578,
  "lines": [
   {
    "line": "Aero needed a page to live on.",
@@ -39,12 +39,7 @@
   {
    "line": "The whole site is a single HTML file, served by a Cloudflare Worker.",
    "start": 35.698,
-   "end": 41.393
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 42.132,
-   "end": 47.036
+   "end": 40.178
   }
  ],
  "heard": [
@@ -60,10 +55,6 @@
   "The clips only play while they are on screen.",
   "And the game waits at the bottom, sitting on the clouds.",
   "The whole site is a single HTML file.",
-  "served by a Cloudflare worker.",
-  "Arrow.",
-  "You can play it at MP3.",
-  "I I",
-  "/games/arrow"
+  "served by a Cloudflare worker."
  ]
 }

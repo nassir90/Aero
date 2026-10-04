@@ -12,6 +12,6 @@
     { say: 5, layers: [{ type: 'clip', clip: 'sky_mask', from: 0 }] },
     { say: 6, layers: [{ type: 'clip', clip: 'site_bottom', from: 0 }, { type: 'code', snip: ["if (!CAPTURE && 'IntersectionObserver'", 3] }], sfx: [{ at: 0.3, type: 'blip' }] },
     { say: 7, layers: [{ type: 'clip', clip: 'site_bottom', from: 'cont' }, { type: 'stat', label: 'lines in index.html', from: 0, to: 1797, top: 230, note: 'html, css and javascript in one file' }] },
-    { say: 8, tail: 1.2, layers: [{ type: 'clip', clip: 'site_bottom', from: 'cont' }, { type: 'end', title: 'Aero', credits: ['After a reel by @snaptic_', 'Playable in your browser'], link: 'mpts.ie/games/aero' }] },
+    { dur: 4.6, layers: [{ type: 'clip', clip: 'site_bottom', from: 'cont' }, { type: 'end', title: 'Aero', titleStyle: { text: 'AERO', font: '700 104px Silkscreen', css: 'https://fonts.googleapis.com/css2?family=Silkscreen:wght@700&display=swap', bg: '#f2f1f6', spacing: 0.06, pad: [0.5, 1.1], y: 630 }, credits: ['After a reel by @snaptic_', 'Playable in your browser'], link: 'mpts.ie/games/aero' }] },
   ],
 })

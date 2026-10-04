@@ -1,5 +1,5 @@
 {
- "duration": 41.28,
+ "duration": 34.033,
  "lines": [
   {
    "line": "Somewhere above the weather, there is a network that nobody ever logged out of.",
@@ -24,12 +24,7 @@
   {
    "line": "At the very end, you meet the one who kept the lights on.",
    "start": 30.031,
-   "end": 35.151
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 35.785,
-   "end": 40.945
+   "end": 33.633
   }
  ],
  "heard": [
@@ -46,9 +41,6 @@
   "past photographs of places you may have forgotten.",
   "Oh.",
   "At the very end,",
-  "You meet the one who kept the lights on.",
-  "Arrow.",
-  "You can play it.",
-  "at MPTs.ie/games/arrow."
+  "You meet the one who kept the lights on."
  ]
 }

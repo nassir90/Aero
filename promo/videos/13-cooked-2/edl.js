@@ -10,6 +10,6 @@
     { say: 3, layers: [{ type: 'clip', clip: 't13', from: 'cont' }] },
     { say: 4, layers: [{ type: 'clip', clip: 't13', from: 'cont' }] },
     { say: 5, layers: [{ type: 'clip', clip: 't13', from: 'cont' }] },
-    { say: 6, tail: 1.2, layers: [{ type: 'clip', clip: 't13', from: 'cont' }, { type: 'end', title: 'Aero', credits: ['After a reel by @snaptic_', 'Playable in your browser'], link: 'mpts.ie/games/aero' }] },
+    { dur: 4.6, layers: [{ type: 'clip', clip: 't13', from: 'cont' }, { type: 'end', title: 'Aero', titleStyle: { text: 'AERO', font: '700 104px Silkscreen', css: 'https://fonts.googleapis.com/css2?family=Silkscreen:wght@700&display=swap', bg: '#f2f1f6', spacing: 0.06, pad: [0.5, 1.1], y: 630 }, credits: ['After a reel by @snaptic_', 'Playable in your browser'], link: 'mpts.ie/games/aero' }] },
   ],
 })

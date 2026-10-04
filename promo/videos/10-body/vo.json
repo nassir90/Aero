@@ -1,5 +1,5 @@
 {
- "duration": 49.76,
+ "duration": 42.897,
  "lines": [
   {
    "line": "Aero's runner is not a model from an asset store. His whole body is one formula.",
@@ -24,12 +24,7 @@
   {
    "line": "When his waist looked too narrow, we measured the torso at several heights, and now it keeps the same width from his hips to his chest.",
    "start": 34.588,
-   "end": 43.673
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 44.232,
-   "end": 49.464
+   "end": 42.497
   }
  ],
  "heard": [
@@ -48,9 +43,6 @@
   "When his waist looked too narrow,",
   "We measure the torso at several heights.",
   "Transcribe this speech exactly.",
-  "It keeps the same width from his hips to his chest.",
-  "arrow",
-  "You can play it at",
-  ".ie/games/arrow"
+  "It keeps the same width from his hips to his chest."
  ]
 }

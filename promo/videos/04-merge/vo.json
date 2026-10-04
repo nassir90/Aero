@@ -1,5 +1,5 @@
 {
- "duration": 57.68,
+ "duration": 50.493,
  "lines": [
   {
    "line": "When you throw four heads at one spot, the four bodies merge into one.",
@@ -34,12 +34,7 @@
   {
    "line": "The walk cycle is an angle too, so the merged runner lands in step.",
    "start": 45.704,
-   "end": 51.23
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 51.707,
-   "end": 57.383
+   "end": 50.093
   }
  ],
  "heard": [
@@ -63,9 +58,6 @@
   "The arrows are added together.",
   "And there's some points the right way.",
   "The walk cycle is an angle two.",
-  "So the merged runner lands in step.",
-  "Arrow.",
-  "You can play it at mpts.ie.",
-  "/games/arrow"
+  "So the merged runner lands in step."
  ]
 }

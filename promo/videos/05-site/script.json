@@ -22,10 +22,5 @@
  },
  {
   "say": "The whole site is a single HTML file, served by a Cloudflare Worker."
- },
- {
-  "say": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-  "sub": "Aero. You can play it at mpts.ie/games/aero",
-  "style": "warm and clear"
  }
 ]

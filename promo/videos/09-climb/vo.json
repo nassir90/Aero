@@ -1,5 +1,5 @@
 {
- "duration": 35.12,
+ "duration": 28.197,
  "lines": [
   {
    "line": "The last part of Aero is a climb, up platforms that rise out of the white.",
@@ -24,12 +24,7 @@
   {
    "line": "Once you have found all four memories, you roll your head into the pipe, and it takes you home.",
    "start": 22.291,
-   "end": 28.99
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 29.625,
-   "end": 34.829
+   "end": 27.797
   }
  ],
  "heard": [
@@ -42,9 +37,6 @@
   "Your body grows back around it.",
   "Once you have found all four memories",
   "You roll your head into the pipe.",
-  "And it takes you home.",
-  "Arrow.",
-  "You can play it at NPTS.org.",
-  "IE/games/arrow"
+  "And it takes you home."
  ]
 }

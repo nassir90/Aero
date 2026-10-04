@@ -1,5 +1,5 @@
 {
- "duration": 38.16,
+ "duration": 31.63,
  "lines": [
   {
    "line": "So who actually made it?",
@@ -29,12 +29,7 @@
   {
    "line": "Game developers are not cooked, but the job has changed shape.",
    "start": 27.606,
-   "end": 32.747
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 33.153,
-   "end": 37.887
+   "end": 31.23
   }
  ],
  "heard": [
@@ -52,8 +47,6 @@
   "direction and knowing what good looks like.",
   "Transcribe this speech exactly",
   "Game developers are not cut.",
-  "But the job has changed shape.",
-  "Arrow.",
-  "You can play it at mpts.ie/games/arrow."
+  "But the job has changed shape."
  ]
 }

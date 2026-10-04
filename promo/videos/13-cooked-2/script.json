@@ -1,9 +1,20 @@
 [
- {"say": "So who actually made it?"},
- {"say": "The model wrote every line, including the shaders, the physics, the rig and the level."},
- {"say": "But every fix started with a person saying what was wrong."},
- {"say": "The notes were things like: the torso is too slender, the armpit stretches, and that menu covers too much."},
- {"say": "That is the job now: taste, direction, and knowing what good looks like."},
- {"say": "Game developers are not cooked, but the job has changed shape."},
- {"say": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.", "sub": "Aero. You can play it at mpts.ie/games/aero", "style": "warm and clear"}
+ {
+  "say": "So who actually made it?"
+ },
+ {
+  "say": "The model wrote every line, including the shaders, the physics, the rig and the level."
+ },
+ {
+  "say": "But every fix started with a person saying what was wrong."
+ },
+ {
+  "say": "The notes were things like: the torso is too slender, the armpit stretches, and that menu covers too much."
+ },
+ {
+  "say": "That is the job now: taste, direction, and knowing what good looks like."
+ },
+ {
+  "say": "Game developers are not cooked, but the job has changed shape."
+ }
 ]

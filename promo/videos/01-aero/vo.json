@@ -1,5 +1,5 @@
 {
- "duration": 53.04,
+ "duration": 44.887,
  "lines": [
   {
    "line": "In Aero, your head is the most useful thing you own.",
@@ -39,12 +39,7 @@
   {
    "line": "At the top, you meet the cloud warden who kept the lights on.",
    "start": 40.101,
-   "end": 46.08
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 46.926,
-   "end": 52.742
+   "end": 44.487
   }
  ],
  "heard": [
@@ -63,10 +58,6 @@
   "Find four memories.",
   "and roll your head into the pipe that takes you home.",
   "At the top,",
-  "You meet the cloud warden who kept the lights on.",
-  "Arrow.",
-  "You can play it at mpts.org.",
-  "Games",
-  "arrow"
+  "You meet the cloud warden who kept the lights on."
  ]
 }

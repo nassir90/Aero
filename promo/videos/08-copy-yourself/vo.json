@@ -1,5 +1,5 @@
 {
- "duration": 34.56,
+ "duration": 26.125,
  "lines": [
   {
    "line": "In Aero, you control the cursor as well as the runner.",
@@ -19,12 +19,7 @@
   {
    "line": "You can also cut the whole crew, carry them as faint outlines, and drop them somewhere else.",
    "start": 19.219,
-   "end": 27.484
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 28.17,
-   "end": 34.182
+   "end": 25.725
   }
  ],
  "heard": [
@@ -41,11 +36,6 @@
   "and jumps when you jump.",
   "You can also cut the whole crew.",
   "carry them as faint outlines.",
-  "and drop them somewhere else.",
-  "Arrow",
-  "You can play it",
-  "And",
-  "MPTS.ie",
-  "/games/arrow"
+  "and drop them somewhere else."
  ]
 }

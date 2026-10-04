@@ -1,5 +1,5 @@
 {
- "duration": 38.16,
+ "duration": 31.659,
  "lines": [
   {
    "line": "This game was made in a single session by Opus 5.5.",
@@ -24,12 +24,7 @@
   {
    "line": "Sixteen versions later, the game is playable.",
    "start": 28.375,
-   "end": 32.6
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 33.153,
-   "end": 37.837
+   "end": 31.259
   }
  ],
  "heard": [
@@ -45,9 +40,6 @@
   "Rigged the character from scratch?",
   "and began measuring its own work.",
   "16 versions later.",
-  "The game is playable.",
-  "arrow",
-  "You can play it at MPTs.org.",
-  "/games/arrow"
+  "The game is playable."
  ]
 }

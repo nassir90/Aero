@@ -1,5 +1,5 @@
 {
- "duration": 47.24,
+ "duration": 39.985,
  "lines": [
   {
    "line": "Aero's world is built from a few plain shapes rather than detailed models.",
@@ -24,12 +24,7 @@
   {
    "line": "The sea on the title screen is nearly twelve thousand ones and zeros, moved by a shader, and it ripples outward wherever you click.",
    "start": 31.331,
-   "end": 40.944
-  },
-  {
-   "line": "Aero. You can play it at M P T S dot I E, slash games, slash Aero.",
-   "start": 41.736,
-   "end": 46.855
+   "end": 39.585
   }
  ],
  "heard": [
@@ -43,10 +38,6 @@
   "14 gradients are mixed at random when the game starts.",
   "and every ring is painted with one of them.",
   "The sea on the title screen is nearly 12,000 ones and zeros, moved by a shader.",
-  "and it ripples outward wherever you click.",
-  "Arrow.",
-  "You can play it at",
-  "MPTS.",
-  "/games/arrow"
+  "and it ripples outward wherever you click."
  ]
 }
