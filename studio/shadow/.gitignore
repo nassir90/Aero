@@ -1,8 +1,0 @@
-clips/
-out/
-videos/*/frames/
-videos/*/*.wav
-videos/*/score.json
-videos/*/timeline.json
-videos/*/*.log
-videos/*/align.err
