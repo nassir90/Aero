@@ -324,6 +324,89 @@ const SCENES = {
   }),
 };
 
+SCENES.director = o => {
+  const D = () => (A.S() && A.S().debug ? A.S().debug() : null), name = () => document.getElementById('sceneName').textContent;
+  const pov = () => document.getElementById('puzzleOv');
+  let i = 0, t0 = 0, st = {}, cam0 = null, lastLook = null;
+  const glide = (lt, from, to, dur, el, type = 'pointermove') => { const k = ease(Math.min(1, lt / dur)); A.ptr(el, type, { clientX: lerp(from.clientX, to.clientX, k), clientY: lerp(from.clientY, to.clientY, k) }); return lt >= dur; };
+  const cpt = p => ({ clientX: p.x, clientY: p.y });
+  const T = q => d => q === 'done' ? d.done : q.startsWith('z<') ? d.crew[0].pos[2] < +q.slice(2) : q.startsWith('z>') ? d.crew[0].pos[2] > +q.slice(2) : false;
+  const ACT = {
+    wait: (lt, sec) => lt >= sec,
+    scene: (lt, nm) => name() === nm && lt > .2,
+    key: (lt, code, down) => { A.key(code, down); return true; },
+    hold: (lt, code, sec) => { if (lt === 0) A.key(code, true); if (lt >= sec) { A.key(code, false); return true; } return false; },
+    holdUntil: (lt, code, test, max = 12) => { if (lt === 0) A.key(code, true); const d = D(); if ((d && T(test)(d)) || lt >= max) { A.key(code, false); return true; } return false; },
+    jumpWhen: (lt, test, max = 6) => { const d = D(); if (st.jt == null && d && T(test)(d)) { A.key('Space', true); st.jt = lt; } if (st.jt != null && lt - st.jt > .3) { A.key('Space', false); st.jt = null; return true; } return lt >= max; },
+    until: (lt, test, max = 12) => { const d = D(); return (d && T(test)(d)) || lt >= max; },
+    select: (lt, idx) => {
+      const d = D(); if (!d) return false; if (o.lookAhead && o.lookAhead[name()]) st.look = o.lookAhead[name()]; const c = d.crew[idx].screen, a = { clientX: c.x - 34, clientY: c.y - 52 }, b = { clientX: c.x + 34, clientY: c.y + 52 };
+      if (lt === 0) st.from = A.cur || { clientX: c.x + 120, clientY: c.y - 160 };
+      if (lt < .5) { glide(lt, st.from, a, .5, pov()); return false; }
+      if (!st.down) { A.ptr(pov(), 'pointerdown', a); st.down = true; return false; }
+      if (lt < 1.2) { glide(lt - .5, a, b, .7, pov()); return false; }
+      A.ptr(pov(), 'pointerup', b); st.down = false; return true;
+    },
+    clip: (lt, kind) => { if (lt < .35) return false; A.key(kind === 'copy' ? 'KeyC' : 'KeyX', true, { ctrlKey: true }); A.key(kind === 'copy' ? 'KeyC' : 'KeyX', false, { ctrlKey: true }); return true; },
+    paste: (lt, idx) => {
+      const d = D(); if (!d) return false; st.look = d.pads[idx].pos; const p = cpt(d.pads[idx].screen);
+      if (lt === 0) st.from = A.cur || p;
+      if (lt < .8) { glide(lt, st.from, p, .8, pov()); return false; }
+      if (lt < 1.15) { A.ptr(pov(), 'pointermove', p); return false; }
+      A.ptr(pov(), 'pointerdown', p); A.ptr(pov(), 'pointerup', p); return true;
+    },
+    aim: (lt, code, x, y, z) => {
+      st.look = [x, y, z]; const S = A.S(), p = S.project(x, y, z), to = cpt(p);
+      if (lt === 0) { A.key(code, true); st.from = A.cur || { clientX: to.clientX + 80, clientY: to.clientY + 140 }; }
+      if (lt < .7) { glide(lt, st.from, to, .7, pov()); return false; }
+      if (lt < 1.3) { A.ptr(pov(), 'pointermove', to); return false; }
+      A.key(code, false); return true;
+    },
+    goto: (lt, id) => { if (lt === 0) A.go(id); return lt > .3; },
+    pipe: lt => {
+      if (lt === 0) {
+        A.go('climb'); const S = A.S(); S.reset(); A.step(.2);
+        const a = __aero, L = a.boxes[12], M = a.mouth; a.collectAll(); a.pos.set(M.x + .2, L.top + .01, M.z + 3.2); a.vel.set(0, 0, 0); a.yaw = .35; A.step(.8);
+        return false;
+      }
+      const a = __aero, L = a.boxes[12], M = a.mouth;
+      if (lt > .5 && !st.k) { A.key('Digit1', true); st.k = 1; }
+      if (st.k === 1 && lt < 1.6) A.ptr(document.getElementById('gl'), 'pointermove', A.client(V(M.x, L.top + .4, M.z - .4)));
+      if (st.k === 1 && lt >= 1.6) { A.key('Digit1', false); return true; }
+      return false;
+    },
+  };
+  return {
+    setup() {
+      const st0 = window.setTimeout;
+      window.setTimeout = (f, ms, ...r) => (f && /goNext\(L\.next\)/.test(String(f)) && name() === 'Heads up' ? 0 : st0(f, ms, ...r));
+      if (o.ui === false) A.hide('#ptoasts, #toasts, #lvHud, #count');
+      else A.hide('#lvHud, #count');
+    },
+    tick(lt) {
+      const steps = o.steps; if (i >= steps.length) return;
+      const [k, ...args] = steps[i], l = Math.round((lt - t0) * 30) / 30;
+      if (ACT[k](l, ...args)) { i++; t0 = lt + 1 / 30; st = {}; }
+      const d = D(); window.__dirdbg = { step: i, k, crew: d && d.crew.map(c => c.pos), aim: d && d.aim && d.aim.ok, cur: A.cur && [Math.round(A.cur.clientX), Math.round(A.cur.clientY)] };
+    },
+    cam(lt) {
+      const d = D(); if (!d || !d.crew.length) { cam0 = null; return; }
+      const pts = d.crew.map(c => V(...c.pos)); if (st.look) pts.push(V(...st.look)); else if (lastLook && lt - lastLook.t < 1.2) pts.push(lastLook.v);
+      if (st.look) lastLook = { v: V(...st.look), t: lt };
+      const c = pts.reduce((a, p) => a.add(p), V(0, 0, 0)).multiplyScalar(1 / pts.length), cam = A.S().cam, pitch = name() === 'Heads up' ? 1.0 : .78, dir = V(0, Math.sin(pitch), Math.cos(pitch));
+      let D0 = 40;
+      for (let Dd = 8; Dd < 40; Dd += .5) {
+        cam.position.copy(c).addScaledVector(dir, Dd); cam.lookAt(c); cam.updateMatrixWorld(true);
+        if (pts.every(p => [0, 2.2].every(h => { const q = p.clone().setY(p.y + h).project(cam); return Math.abs(q.x) < .82 && q.y < .5 && q.y > -.55; }))) { D0 = Dd; break; }
+      }
+      if (!cam0 || name() !== cam0.name) cam0 = { c: c.clone(), D: D0, name: name() };
+      cam0.c.lerp(c, .07); cam0.D += (D0 - cam0.D) * .07;
+      cam.position.copy(cam0.c).addScaledVector(dir, cam0.D); cam.lookAt(cam0.c); cam.updateMatrixWorld(true);
+    },
+    ann() { return A.S() && A.S().debug && A.cur ? A.cursorMark() : []; },
+  };
+};
+
 let seq = [], starts = [], cur = -1, meta = null;
 window.CLIP_RUN = {
   async start(name) {
@@ -345,7 +428,7 @@ window.CLIP_RUN = {
     if (s.tick) s.tick(lt);
     A.step(1 / 30);
     if (s.cam) { s.cam(lt); A.step(0); }
-    meta = { scene: k, ann: s.ann ? s.ann(lt) : [], pos: window.__aero && A.S() && A.S().scene && __aero.pos ? [__aero.pos.x, __aero.pos.y, __aero.pos.z].map(v => +v.toFixed(2)) : null };
+    meta = { scene: k, dbg: window.__dirdbg, name: document.getElementById('sceneName').textContent, ann: s.ann ? s.ann(lt) : [], pos: window.__aero && A.S() && A.S().scene && __aero.pos ? [__aero.pos.x, __aero.pos.y, __aero.pos.z].map(v => +v.toFixed(2)) : null };
   },
   meta: () => meta,
 };

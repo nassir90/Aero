@@ -1,0 +1,62 @@
+{
+ "duration": 49.4,
+ "lines": [
+  {
+   "line": "At the top of the climb, the pipe now carries you on to five puzzle levels.",
+   "start": 0.0,
+   "end": 6.228
+  },
+  {
+   "line": "The first holds a crystal that lets you copy yourself onto any square with a turquoise border.",
+   "start": 7.386,
+   "end": 13.497
+  },
+  {
+   "line": "Every copy moves when you move, so one of you can hold a plate down while the other crosses the bridge it opens.",
+   "start": 14.412,
+   "end": 21.492
+  },
+  {
+   "line": "On the next level, a single jump has to carry both of you over your own gaps.",
+   "start": 22.603,
+   "end": 27.776
+  },
+  {
+   "line": "Orange rings take cuts instead. Cut yourself, click a ring, and you are standing on it.",
+   "start": 28.844,
+   "end": 34.827
+  },
+  {
+   "line": "One level needs three of you at once, so you copy, cut the copy across, and copy again.",
+   "start": 35.993,
+   "end": 42.367
+  },
+  {
+   "line": "The last asks you to throw your head over a wall, and roll it under a barrier.",
+   "start": 43.382,
+   "end": 49.04
+  }
+ ],
+ "heard": [
+  "at the top of the climb.",
+  "The pipe now carries you.",
+  "onto five puzzle levels.",
+  "The first holds a crystal that lets you copy yourself.",
+  "onto any square with a turquoise border.",
+  "Every copy moves when you move.",
+  "So, one of you can hold a plate down.",
+  "While the other crosses the bridge, it opens.",
+  "on the next level.",
+  "A single jump has to carry both of you over your own gaps.",
+  "Orange rings take cuts instead.",
+  "Cut yourself?",
+  "Click and drag",
+  "and you are standing on it.",
+  "One level needs three of you at once.",
+  "So, you copy?",
+  "Cut the copy across.",
+  "and copy again.",
+  "The last asks you to throw your head over a wall.",
+  "and roll it under a barrier."
+ ]
+}

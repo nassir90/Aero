@@ -83,6 +83,18 @@ for (const [name, mode] of [['sky_edge', 'edge'], ['sky_seam', 'seam'], ['sky_ma
     ['body', menuAt, { a0: .5, spin: .06, r: 2.9, ann: 'notes', notes: [.3, r2(p.wordAt(3, 9) - p.at[3] - .2)], annAt: 0 }], ['menu', d[3] - menuAt, { noteAt: 1.4 }],
     ['orbit', d[4], { r: 30, h: 16, spin: .05 }], ['climb', d[5] + d[6], { from: 0, walkTo: 3, yaw: .35 }]]);
   SPEC.s13 = { app: 'pages', page: `stills.html?set=v06_lumpy:.5:${r2(d[2])}`, seconds: r2(d[2]) + .2, ready: () => window.__ready && window.__ready(), annotate: () => ({ state: window.__state }), inject: null, setup: null, each: null }; }
+const PUZZLE_RUN = [
+  ['pipe'], ['scene', 'Copy crystal'], ['wait', 1.4],
+  ['hold', 'KeyW', .3], ['wait', 1.0], ['select', 0], ['clip', 'copy'], ['paste', 0], ['wait', 1.0], ['hold', 'KeyW', 1.0], ['wait', 3.5], ['holdUntil', 'KeyW', 'done'],
+  ['scene', 'In sync'], ['wait', 1.4], ['select', 0], ['clip', 'copy'], ['paste', 0], ['wait', 1.0],
+  ['key', 'KeyW', true], ['jumpWhen', 'z<-3.5'], ['until', 'done'], ['key', 'KeyW', false],
+  ['scene', 'Cut'], ['wait', 1.4], ['hold', 'KeyW', .3], ['wait', 1.0], ['select', 0], ['clip', 'cut'], ['paste', 0], ['wait', 1.2], ['select', 0], ['clip', 'cut'], ['paste', 1], ['wait', 1.0], ['holdUntil', 'KeyW', 'done', 3],
+  ['scene', 'Copy and cut'], ['wait', 1.4], ['select', 0], ['clip', 'copy'], ['paste', 0], ['wait', .9], ['select', 1], ['clip', 'cut'], ['paste', 1], ['wait', .9], ['select', 0], ['clip', 'copy'], ['paste', 0], ['wait', 1.0], ['holdUntil', 'KeyW', 'done'],
+  ['scene', 'Heads up'], ['wait', 1.6], ['aim', 'Digit2', 0, 0, -6.5], ['wait', 2.2], ['holdUntil', 'KeyW', 'z<-10.6', 3], ['wait', .5], ['aim', 'Digit1', 0, 0, -17], ['wait', 2.4],
+  ['holdUntil', 'KeyW', 'z<-25.6', 4], ['wait', .4], ['aim', 'Digit2', 0, 2.8, -30], ['wait', 2.2], ['holdUntil', 'KeyW', 'done', 3],
+];
+seq('puzzles', [['director', 110, { steps: PUZZLE_RUN, ui: false }]]);
+seq('puzzles_ui', [['director', 110, { steps: PUZZLE_RUN, ui: true }]]);
 TAKES.ocean_end = { seq: [['sea', 14, { plate: false }]] }; SPEC.ocean_end = { seconds: 14 };
 
 const takes = {};
