@@ -1,6 +1,6 @@
 # Dependencies
 
-Checked on 7 October 2026. "Latest" is from `npm view` / `pip index`.
+Checked on 7 October 2026. "Latest" is from `npm view` / `pip index`. "Active" means the GitHub repository is not archived and had commits in the last month (checked with the GitHub API).
 
 ## The game (`public/games/aero/index.html`)
 
@@ -36,7 +36,7 @@ Everything else in the game is written in the file: physics, aiming, selection, 
 
 | What | Where | Alternative | Recommendation |
 |---|---|---|---|
-| Character controller (box push-out, coyote time, jump cut) | `stepKinematic` | [rapier.js](https://github.com/dimforge/rapier.js) (Apache-2.0, active) | Keep. Rapier is about 1.5 MB of WASM for about 25 lines, and the feel is tuned by hand. |
+| Character controller (box push-out, coyote time, jump cut) | `stepKinematic` | [Rapier](https://github.com/dimforge/rapier) (Apache-2.0, active; the JavaScript bindings now live in its `typescript` folder, as the old rapier.js repository is archived) | Keep. Rapier is about 1.5 MB of WASM for about 25 lines, and the feel is tuned by hand. |
 | Head throw and roll arcs, aim beads | `headTravel`, `aimGuide` | [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) (MIT, active) only speeds up raycasts | Keep |
 | Easing and smoothing | `smooth`, lerps | [tween.js](https://github.com/tweenjs/tween.js) (MIT), GSAP | Keep: they are one-liners |
 | Box selection, context menu, copy/cut/paste | `marquee`, `screenBounds`, `placeBeside` | three's `SelectionBox` addon | Keep |
@@ -44,6 +44,6 @@ Everything else in the game is written in the file: physics, aiming, selection, 
 | Chord pad and chimes (Web Audio) | `chime`, the pad | [ZzFX](https://github.com/KilledByAPixel/ZzFX) (MIT, about 1 KB, active) | Consider, if you want jump, land and throw sounds |
 | Pixel look (low-resolution render, CSS upscale) | `fit`, renderer size | pmndrs [postprocessing](https://github.com/pmndrs/postprocessing) PixelationEffect | Keep: rendering small is cheaper and sharper |
 | Text on canvas textures | signs, tape, panels | [troika-three-text](https://github.com/protectwise/troika) (MIT, active) | Keep: smooth text would fight the pixel look |
-| Word timings for subtitles (silence detection and syllable counting) | ShadowKit `align.py`, `words.py` | [stable-ts](https://github.com/jianfch/stable-ts) (MIT, active), [whisperX](https://github.com/m-bain/whisperX) (BSD-2) | Adopt stable-ts `align()` when the venv moves to a newer Python: the cut-out spoken word depends on these timings |
+| Word timings for subtitles (silence detection and syllable counting) | ShadowKit `align.py`, `words.py` | [whisperX](https://github.com/m-bain/whisperX) (BSD-2, active), which aligns words with a phoneme model | Adopt whisperX when the venv moves to a newer Python: the cut-out spoken word depends on these timings. Not stable-ts: its repository is archived and development is paused. |
 | Loudness (single-pass `loudnorm`) | ShadowKit `build.py` | [ffmpeg-normalize](https://github.com/slhck/ffmpeg-normalize) (MIT, active) | Consider: one pass misses the target on short clips |
 | Frame capture | TapaTab | Playwright video recording (not frame-exact) | Keep TapaTab, and port `studio/capture.mjs` to it so puppeteer-core can go |
