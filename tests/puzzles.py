@@ -167,7 +167,7 @@ def chain_end(g):
     ok, note = lvhead(g)
     if not ok: return False, note
     g.pg.wait_for_timeout(4000); name = g.pg.evaluate("document.getElementById('sceneName').textContent")
-    return name in ("Lights on", "Halcyon"), f"after Heads up the scene is {name!r} (expected the finale)"
+    return name == "Relay", f"after Heads up the scene is {name!r} (expected 'Relay')"
 
 def shot(g, name):
     d = os.environ.get("SHOTS")
@@ -186,6 +186,140 @@ def shots(g):
     if lv == "Heads up": g.pg.keyboard.down("Digit2"); g.step(.05); a = g.proj(0, 0, -6.5); g.pg.mouse.move(*a, steps=4); g.step(.3); shot(g, lv + "-2-aim"); g.pg.keyboard.up("Digit2"); g.step(2); g.hold("KeyW", 1.5, until=lambda d: z(d) < -10.6); g.step(.3); shot(g, lv + "-3-barrier")
     return True, "shots"
 
+def x(d, i=0): return d["crew"][i]["pos"][0]
+def y(d, i=0): return d["crew"][i]["pos"][1]
+def jump_when(g, test, until, secs=8):
+    jumped = False
+    for _ in range(int(secs / .05)):
+        g.step(.05); d = g.dbg()
+        if not jumped and test(d): g.pg.keyboard.down("Space"); g.step(.3); g.pg.keyboard.up("Space"); jumped = True
+        if until(d): break
+    return g.dbg()
+def delete(g, i): g.select(i); g.pg.keyboard.press("Delete"); g.step(.6)
+
+def relay(g):
+    g.select(0); g.clip("copy"); g.paste(0); g.hold("KeyD", 5, until=lambda d: d["done"]); d = g.dbg()
+    return d["done"], f"crew {[c['pos'] for c in d['crew']]}"
+def relay_alone(g):
+    g.hold("KeyD", 4); d = g.dbg()
+    return not d["done"], f"walking across alone: done={d['done']} (expected False)"
+
+def chain(g):
+    g.select(0); g.clip("cut"); g.paste(0); g.step(.8); d = g.dbg()
+    if abs(z(d) + 12) > .3: return False, f"first ring missed, at {d['crew'][0]['pos']}"
+    g.select(0); g.clip("cut"); g.paste(1); g.step(.8); d = g.dbg()
+    if abs(x(d) - 8) > .3: return False, f"second ring missed, at {d['crew'][0]['pos']}"
+    g.hold("KeyW", 4, until=lambda d: d["done"]); d = g.dbg()
+    return d["done"], f"pos {d['crew'][0]['pos']}, gates {d['gates']}"
+def chain_jump(g):
+    g.pg.keyboard.down("KeyW"); g.pg.keyboard.down("Space"); g.step(.4); g.pg.keyboard.up("Space"); g.step(2.6); g.pg.keyboard.up("KeyW"); g.step(.4); d = g.dbg()
+    return not d["done"] and z(d) > -3, f"jumping for the first island: pos {d['crew'][0]['pos']} (expected to fall and respawn on the start island)"
+
+def hops(g):
+    g.head("Digit2", 0, 0, -6.5); d = g.dbg()
+    if z(d) > -4.5: return False, f"wall throw failed, z {z(d)}"
+    g.head("Digit2", 0, 0, -15); d = g.dbg()
+    if z(d) > -13: return False, f"gap throw failed, z {z(d)}"
+    g.hold("KeyW", 3, until=lambda d: z(d) < -19.6); g.head("Digit1", 0, 0, -24); d = g.dbg()
+    if z(d) > -22: return False, f"first roll failed, z {z(d)}"
+    g.hold("KeyW", 3, until=lambda d: z(d) < -25.6); g.head("Digit1", 0, 0, -30); d = g.dbg()
+    if z(d) > -28: return False, f"second roll failed, z {z(d)}"
+    g.hold("KeyW", 3, until=lambda d: z(d) < -31.2); g.head("Digit2", 0, 2.4, -36); d = g.dbg()
+    if y(d) < 2.3: return False, f"last throw failed, pos {d['crew'][0]['pos']}"
+    g.hold("KeyW", 2, until=lambda d: d["done"]); d = g.dbg()
+    return d["done"], f"pos {d['crew'][0]['pos']}"
+def hops_skip(g):
+    g.head("Digit2", 0, 0, -6.5); g.head("Digit2", 0, 0, -15); g.hold("KeyW", 3, until=lambda d: z(d) < -19.6); g.head("Digit2", 0, 0, -24); d = g.dbg()
+    return z(d) > -21, f"throwing past the first barrier: z {z(d)} (expected still in front of it)"
+
+def aim(g):
+    g.hold("KeyW", 1.2); g.head("Digit1", 0, 0, -12.6); g.step(1.2); d = g.dbg()
+    if not d["gates"][0]: return False, f"roll did not stop on the plate: pos {d['crew'][0]['pos']}"
+    g.hold("KeyW", 5, until=lambda d: d["done"]); d = g.dbg()
+    return d["done"], f"pos {d['crew'][0]['pos']}"
+def aim_overshoot(g):
+    g.hold("KeyW", 1.2); g.pg.keyboard.down("Digit1"); g.step(.1); g.pg.keyboard.up("Digit1"); g.step(4); d = g.dbg()
+    return not d["gates"][0] and z(d) > -1, f"full-speed roll: gate {d['gates'][0]}, pos {d['crew'][0]['pos']} (expected off the edge and back at the start)"
+
+def cutcopy(g):
+    g.select(0); g.clip("copy"); g.paste(0); g.select(1); g.clip("cut"); g.paste(1); g.step(.6); d = g.dbg()
+    if not d["gates"][0]: return False, f"copy not on the plate: {[c['pos'] for c in d['crew']]}"
+    g.hold("KeyW", 4, until=lambda d: d["done"]); d = g.dbg()
+    return d["done"], f"crew {[c['pos'] for c in d['crew']]}"
+def cutcopy_self(g):
+    g.select(0); g.clip("cut"); g.paste(1); g.step(.6); g.hold("KeyW", 3); d = g.dbg()
+    return not d["done"], f"cutting yourself to the plate: done={d['done']} (expected False)"
+
+def lanes(g, jump=True):
+    g.select(0); g.clip("copy"); g.paste(0); g.select(0); g.clip("copy"); g.paste(1); d = g.dbg()
+    if len(d["crew"]) != 3: return False, f"crew {len(d['crew'])}"
+    g.pg.keyboard.down("KeyW"); d = jump_when(g, (lambda d: z(d) < -1.7) if jump else (lambda d: False), lambda d: d["done"], 8); g.pg.keyboard.up("KeyW")
+    return (d["done"], f"plates {d['plates']}, crew {[c['pos'] for c in d['crew']]}") if jump else (not d["gates"][0], f"without the jump: gate {d['gates'][0]} (expected False)")
+def lanes_nojump(g): return lanes(g, False)
+
+def lineup(g, align=True):
+    g.select(0); g.clip("copy"); g.paste(0)
+    if align:
+        g.hold("KeyW", 2, until=lambda d: z(d) < -1.4); g.hold("KeyD", .3); d = g.dbg()
+        if x(d, 1) < 3.95: return False, f"copy still behind the stub: {d['crew'][1]['pos']}"
+    g.pg.keyboard.down("KeyW"); d = jump_when(g, (lambda d: z(d) < -5.6) if align else (lambda d: len(d["crew"]) > 1 and z(d, 1) < -5.6), lambda d: d["done"] or len(d["crew"]) < 2, 6)
+    d = jump_when(g, lambda d: False, lambda d: d["done"] or d["gates"][0], 4); g.pg.keyboard.up("KeyW")
+    if align:
+        g.pg.keyboard.down("KeyA")
+        for _ in range(30):
+            g.step(.1); d = g.dbg()
+            if os.environ.get("TRACE"): print([c["pos"] for c in d["crew"]], d["gates"], d["done"])
+            if d["done"]: break
+        g.pg.keyboard.up("KeyA"); d = g.dbg()
+    return (d["done"], f"gates {d['gates']}, crew {[c['pos'] for c in d['crew']]}") if align else (not d["gates"][0], f"without lining up: gate {d['gates'][0]}, crew {len(d['crew'])} (expected gate closed)")
+def lineup_skip(g): return lineup(g, False)
+
+def leap(g):
+    g.select(0); g.clip("copy"); g.paste(0); g.hold("KeyW", 3, until=lambda d: z(d) < -10.2); d = g.dbg()
+    if z(d) > -9: return False, f"did not cross the first bridge: {d['crew'][0]['pos']}"
+    g.hold("KeyA", .25); g.select(1); g.clip("cut"); g.paste(1); g.step(.6); d = g.dbg()
+    if not d["gates"][1]: return False, f"second bridge closed: {[c['pos'] for c in d['crew']]}"
+    g.hold("KeyW", 4, until=lambda d: d["done"]); d = g.dbg()
+    return d["done"], f"crew {[c['pos'] for c in d['crew']]}"
+def leap_alone(g):
+    g.hold("KeyW", 3); d = g.dbg()
+    return not d["done"] and z(d) > -8, f"walking alone: pos {d['crew'][0]['pos']} (expected to fall and respawn)"
+
+def back_to_one(g, delete_copy=True):
+    g.head("Digit2", 0, 0, -6.5); d = g.dbg()
+    if z(d) > -4: return False, f"wall throw failed {d['crew'][0]['pos']}"
+    g.select(0); g.clip("copy"); g.paste(0); g.hold("KeyW", 5, until=lambda d: z(d) < -24.8); d = g.dbg()
+    if z(d) > -24: return False, f"did not cross the long bridge: {d['crew'][0]['pos']}"
+    if delete_copy:
+        delete(g, 1); d = g.dbg()
+        if len(d["crew"]) != 1: return False, f"copy not deleted, crew {len(d['crew'])}"
+    g.head("Digit2", 0, 1.5, -32); d = g.dbg()
+    if not delete_copy: return y(d) < 1, f"throwing with a copy still around: pos {d['crew'][0]['pos']} (expected no throw)"
+    if y(d) < 1.4: return False, f"last throw failed {d['crew'][0]['pos']}"
+    g.hold("KeyW", 2, until=lambda d: d["done"]); d = g.dbg()
+    return d["done"], f"pos {d['crew'][0]['pos']}"
+def back_to_one_two(g): return back_to_one(g, False)
+
+def final(g):
+    g.select(0); g.clip("copy"); g.paste(0); g.select(1); g.clip("cut"); g.paste(1); g.step(.4); g.select(0); g.clip("copy"); g.paste(0); d = g.dbg()
+    if len(d["crew"]) != 3: return False, f"crew {len(d['crew'])}"
+    g.hold("KeyW", 5, until=lambda d: z(d) < -15.6); d = g.dbg()
+    if z(d) > -15: return False, f"bridge not crossed: {d['crew'][0]['pos']}, gates {d['gates']}"
+    delete(g, 1); delete(g, 1); d = g.dbg()
+    if len(d["crew"]) != 1: return False, f"copies not deleted: crew {len(d['crew'])}"
+    g.head("Digit2", 0, 0, -23); d = g.dbg()
+    if z(d) > -21: return False, f"wall throw failed {d['crew'][0]['pos']}"
+    g.hold("KeyW", 2, until=lambda d: z(d) < -25.6); g.head("Digit1", 0, 0, -31); d = g.dbg()
+    if z(d) > -28: return False, f"roll failed {d['crew'][0]['pos']}"
+    g.hold("KeyW", 2, until=lambda d: d["done"]); d = g.dbg()
+    return d["done"], f"pos {d['crew'][0]['pos']}"
+
+def chain_final(g):
+    ok, note = final(g)
+    if not ok: return False, note
+    g.pg.wait_for_timeout(4000); name = g.pg.evaluate("document.getElementById('sceneName').textContent")
+    return name in ("Lights on", "Halcyon"), f"after All together the scene is {name!r} (expected the finale)"
+
 def lvhead_walls(g):
     g.hold("KeyW", 2); d = g.dbg(); a = z(d)
     g.pg.keyboard.down("KeyW"); g.pg.keyboard.down("Space"); g.step(.6); g.pg.keyboard.up("Space"); g.step(.6); g.pg.keyboard.up("KeyW"); d = g.dbg(); b = z(d)
@@ -193,7 +327,7 @@ def lvhead_walls(g):
     return a > -2.9 and b > -2.9 and c > -2.9, f"walk z {a}, jump z {b}, roll z {c} (all expected to stop at the wall, > -2.9)"
 
 TESTS = [("title", "every_scene"), ("lvcopy", "lvcopy"), ("lvcopy", "lvcopy_without_copy"), ("lvsync", "lvsync"), ("lvsync", "lvsync_one_body"), ("lvcut", "lvcut"), ("lvcut", "lvcut_jump"),
-         ("lvboth", "lvboth"), ("lvboth", "lvboth_two_bodies"), ("lvhead", "lvhead"), ("lvhead", "lvhead_walls"), ("lvhead", "lvhead_no_throw_past_bar"), ("lvboth", "lvboth_jump"), ("lvhead", "lvhead_beads_stop_at_wall"), ("lvhead", "lvhead_beads_clear_from_back"), ("climb", "chain_climb"), ("lvhead", "chain_end"), ("lvcopy", "shots"), ("lvsync", "shots"), ("lvcut", "shots"), ("lvboth", "shots"), ("lvhead", "shots")]
+         ("lvboth", "lvboth"), ("lvboth", "lvboth_two_bodies"), ("lvhead", "lvhead"), ("lvhead", "lvhead_walls"), ("lvhead", "lvhead_no_throw_past_bar"), ("lvboth", "lvboth_jump"), ("lvhead", "lvhead_beads_stop_at_wall"), ("lvhead", "lvhead_beads_clear_from_back"), ("climb", "chain_climb"), ("lvhead", "chain_end"), ("lvrelay", "relay"), ("lvrelay", "relay_alone"), ("lvchain", "chain"), ("lvchain", "chain_jump"), ("lvhops", "hops"), ("lvhops", "hops_skip"), ("lvaim", "aim"), ("lvaim", "aim_overshoot"), ("lvcutcopy", "cutcopy"), ("lvcutcopy", "cutcopy_self"), ("lvlanes", "lanes"), ("lvlanes", "lanes_nojump"), ("lvlineup", "lineup"), ("lvlineup", "lineup_skip"), ("lvleap", "leap"), ("lvleap", "leap_alone"), ("lvdelete", "back_to_one"), ("lvdelete", "back_to_one_two"), ("lvfinal", "final"), ("lvfinal", "chain_final"), ("lvcopy", "shots"), ("lvsync", "shots"), ("lvcut", "shots"), ("lvboth", "shots"), ("lvhead", "shots"), ("lvrelay", "shots"), ("lvchain", "shots"), ("lvhops", "shots"), ("lvaim", "shots"), ("lvcutcopy", "shots"), ("lvlanes", "shots"), ("lvlineup", "shots"), ("lvleap", "shots"), ("lvdelete", "shots"), ("lvfinal", "shots")]
 only = sys.argv[1:]
 try:
   with sync_playwright() as pw:

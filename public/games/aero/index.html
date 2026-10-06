@@ -1733,12 +1733,89 @@ const LEVELS = {
     plates: [{ x: 0, z: -1.8, group: 'a' }, { x: -10.5, z: -4.6, group: 'a' }, { x: 10.5, z: -4.6, group: 'a' }],
     gates: [{ group: 'a', latch: true, boxes: [[0, -6.25, 0, 2, 6.5]] }],
     exit: { x: 0, z: -11.4 } },
-  lvhead: { name: 'Heads up', next: 'finale', start: [0, 1], maxCrew: 1, heads: true, dist: 14,
+  lvhead: { name: 'Heads up', next: 'lvrelay', start: [0, 1], maxCrew: 1, heads: true, dist: 14,
     intro: ['head.sys', 'A wall too tall to jump, then a barrier you can only get under. Hold 2 to throw your head, 1 to roll it. Stand back from walls to clear them.'],
     islands: [[0, 0, 0, 6, 5], [0, -6, 0, 4, 4], [0, -18, 0, 2.2, 20], [0, -30.5, 2.8, 4, 4]],
     walls: [[0, -2.7, 0, 6, .4, 3.2]],
     beams: [[0, -12, .55, 2.2, .5, 7.45]],
     exit: { x: 0, z: -31.3 } },
+  lvrelay: { name: 'Relay', next: 'lvchain', start: [-1, 0], maxCrew: 2, has: ['copy'], focus: [-3, 13, -13, 3], k: .7,
+    intro: ['relay.sys', 'The bridge opens while someone stands on the plate. Walls stop copies, even when you keep walking.'],
+    islands: [[0, 0, 0, 4, 4], [10, 0, 0, 4, 4], [0, -10, 0, 5, 4]],
+    walls: [[2.3, -10, 0, .4, 4, 3]],
+    pads: [{ type: 'copy', x: -1.2, z: -10 }],
+    plates: [{ x: 1.2, z: -10, group: 'a' }],
+    gates: [{ group: 'a', boxes: [[5, 0, 0, 6, 2]] }],
+    exit: { x: 10.5, z: 0 } },
+  lvchain: { name: 'Stepping rings', next: 'lvhops', start: [0, 1.5], maxCrew: 1, has: ['cut'], focus: [-3, 11, -27, 3.5], k: .4,
+    intro: ['ring.sys', 'Each orange ring is a place to cut yourself to.'],
+    islands: [[0, 0, 0, 5, 5], [0, -12, 0, 3, 3], [8, -18, 1.2, 3, 3], [8, -26, 1.2, 4, 4]],
+    pads: [{ type: 'cut', x: 0, z: -12 }, { type: 'cut', x: 8, z: -17.6 }],
+    plates: [{ x: 8, z: -18.9, group: 'a' }],
+    gates: [{ group: 'a', latch: true, boxes: [[8, -21.75, 1.2, 2, 4.5]] }],
+    exit: { x: 8, z: -26.6 } },
+  lvhops: { name: 'Hops', next: 'lvaim', start: [0, 1], maxCrew: 1, heads: true, dist: 14,
+    intro: ['hops.sys', 'Over a wall, across a gap, under two barriers, and up to the exit.'],
+    islands: [[0, 0, 0, 5, 5], [0, -6.5, 0, 3, 3], [0, -15, 0, 3, 3], [0, -24.25, 0, 2.2, 15.5], [0, -36, 2.4, 3, 3]],
+    walls: [[0, -2.7, 0, 5, .4, 3.2]],
+    beams: [[0, -21, .55, 2.2, .5, 7.45], [0, -27, .55, 2.2, .5, 7.45]],
+    exit: { x: 0, z: -36.6 } },
+  lvaim: { name: 'Dead stop', next: 'lvcutcopy', start: [0, 1], maxCrew: 1, heads: true, focus: [-3, 3, -16, 3], k: .45,
+    intro: ['aim.sys', 'Roll your head under the barrier and stop it on the plate. Too far, and it rolls off the edge.'],
+    islands: [[0, 0, 0, 5, 5], [0, -8, 0, 2.2, 11], [0, -30, 0, 3, 3]],
+    beams: [[0, -6, .55, 2.2, .5, 7.45]],
+    plates: [{ x: 0, z: -12.6, group: 'a' }],
+    gates: [{ group: 'a', latch: true, boxes: [[0, -21, 0, 2, 15]] }],
+    exit: { x: 0, z: -30.4 } },
+  lvcutcopy: { name: 'Cut the copy', next: 'lvlanes', start: [0, 1], maxCrew: 2, has: ['copy', 'cut'], focus: [-12, 12, -12, 3], k: .75,
+    intro: ['plate.sys', 'The plate is behind an orange ring, but whoever stands on it cannot reach the exit.'],
+    islands: [[0, 0, 0, 5, 4], [0, -10, 0, 3, 3], [-10, 0, 0, 3, 3], [10, 0, 0, 3, 3]],
+    walls: [[10, -1.3, 0, 3, .4, 3]],
+    pads: [{ type: 'copy', x: -10, z: .6 }, { type: 'cut', x: 10, z: -.2 }],
+    plates: [{ x: 10, z: -.2, group: 'a' }],
+    gates: [{ group: 'a', boxes: [[0, -5.25, 0, 2, 6.5]] }],
+    exit: { x: 0, z: -10.4 } },
+  lvlanes: { name: 'Three lanes', next: 'lvlineup', start: [-5, 1], maxCrew: 3, has: ['copy'], focus: [-7, 7, -14, 2.5], k: .45,
+    intro: ['lanes.sys', 'Three lanes, three plates, and one of them has a gap.'],
+    islands: [[-5, -7, 0, 2.6, 18], [0, -3.75, 0, 2.6, 11.5], [5, -1, 0, 2.6, 6], [5, -9.5, 0, 2.6, 7], [-5, -19.5, 0, 3, 3]],
+    walls: [[0, -9.7, 0, 2.6, .4, 3], [5, -13.2, 0, 2.6, .4, 3]],
+    pads: [{ type: 'copy', x: 0, z: 0 }, { type: 'copy', x: 5, z: -1 }],
+    plates: [{ x: -5, z: -15.2, group: 'a' }, { x: 0, z: -9, group: 'a' }, { x: 5, z: -12.5, group: 'a' }],
+    gates: [{ group: 'a', latch: true, boxes: [[-5, -17, 0, 2, 2]] }],
+    exit: { x: -5, z: -20 } },
+  lvlineup: { name: 'Line up', next: 'lvleap', start: [-4.2, 2], maxCrew: 2, has: ['copy'], focus: [-13, 6, -15, 3], k: .5,
+    intro: ['gap.sys', 'The gaps are too wide unless both of you jump from the edge. Line up first.'],
+    islands: [[-3.5, -2, 0, 3, 8], [-3.5, -11.75, 0, 3, 4.5], [3.5, -2, 0, 3, 8], [3.5, -11.75, 0, 3, 4.5], [-11, -12.75, 0, 3, 3.5]],
+    walls: [[2.8, -2, 0, 1.6, .4, 3], [-3.5, -14.2, 0, 3, .4, 3], [3.5, -14.2, 0, 3, .4, 3], [1.8, -12, 0, .4, 4, 3]],
+    pads: [{ type: 'copy', x: 2.8, z: 0 }],
+    plates: [{ x: -3.5, z: -13.3, w: 2.9, group: 'a' }, { x: 3.5, z: -13.3, w: 2.9, group: 'a' }],
+    gates: [{ group: 'a', latch: true, boxes: [[-7.25, -12.75, 0, 4.5, 2.5]] }],
+    exit: { x: -11, z: -13.2 } },
+  lvleap: { name: 'Leapfrog', next: 'lvdelete', start: [0, 1.5], maxCrew: 2, has: ['copy', 'cut'], focus: [-12, 4, -24, 3], k: .45,
+    intro: ['leap.sys', 'Two bridges, two plates, and only one copy.'],
+    islands: [[0, 0, 0, 5, 5], [-9.5, 0, 0, 3, 3], [0, -11, 0, 5, 5], [-1.25, -21.5, 0, 4, 4]],
+    walls: [[-9.5, -1.3, 0, 3, .4, 3], [1.25, -13.3, 0, 2.5, .4, 3]],
+    pads: [{ type: 'copy', x: -9.5, z: -.6 }, { type: 'cut', x: 1.3, z: -12.6 }],
+    plates: [{ x: -9.5, z: -.6, group: 'a' }, { x: 1.3, z: -12.6, group: 'b' }],
+    gates: [{ group: 'a', boxes: [[0, -5.5, 0, 2, 6]] }, { group: 'b', boxes: [[-1.25, -16.5, 0, 2, 6]] }],
+    exit: { x: -1.25, z: -22 } },
+  lvdelete: { name: 'Back to one', next: 'lvfinal', start: [0, 1], maxCrew: 2, heads: true, has: ['copy'], focus: [-3, 12, -34, 3], k: .3, dist: 17,
+    intro: ['head.sys', 'Your head only travels when there is one of you. Copies can be deleted (select, then Delete).'],
+    islands: [[0, 0, 0, 5, 4], [0, -6.5, 0, 6, 5], [10.5, -6.5, 0, 3, 3], [0, -26, 0, 4, 4], [0, -32, 1.5, 3, 3]],
+    walls: [[0, -2.2, 0, 5, .4, 3.2], [10.5, -8.2, 0, 3, .4, 3], [0, -28.2, 0, 4, .4, 3.2]],
+    pads: [{ type: 'copy', x: 10.5, z: -6.5 }],
+    plates: [{ x: 10.5, z: -7.3, group: 'a' }],
+    gates: [{ group: 'a', boxes: [[0, -16.5, 0, 2, 15]] }],
+    exit: { x: 0, z: -32.4 } },
+  lvfinal: { name: 'All together', next: 'finale', start: [0, 1.6], maxCrew: 3, heads: true, has: ['copy', 'cut'], focus: [-12.5, 12.5, -10, 3.5], k: .55,
+    intro: ['final.sys', 'Everything at once.'],
+    islands: [[0, 0, 0, 6, 6], [-10.5, -4, 0, 3, 3], [10.5, -4, 0, 3, 3], [0, -17, 0, 5, 4], [0, -28, 0, 2.2, 14]],
+    walls: [[-10.5, -5.3, 0, 3, .4, 3], [10.5, -5.3, 0, 3, .4, 3], [0, -19.2, 0, 5, .4, 3.2]],
+    beams: [[0, -27, .55, 2.2, .5, 7.45]],
+    pads: [{ type: 'copy', x: -10.5, z: -4.4 }, { type: 'cut', x: 10.5, z: -4.4 }],
+    plates: [{ x: 0, z: -1.8, group: 'a' }, { x: -10.5, z: -4.6, group: 'a' }, { x: 10.5, z: -4.6, group: 'a' }],
+    gates: [{ group: 'a', latch: true, boxes: [[0, -9, 0, 2, 12]] }],
+    exit: { x: 0, z: -34.4 } },
 };
 function buildPuzzle(L) {
   const scene = new THREE.Scene(); scene.environment = ENV; scene.fog = new THREE.Fog(0xf4f2ff, 34, 150);
@@ -1784,7 +1861,7 @@ function buildPuzzle(L) {
   });
   const plateMat = () => new THREE.MeshStandardMaterial({ color: 0x8f7dff, emissive: 0x7b6cff, emissiveIntensity: 0, roughness: .3, metalness: .2, envMap: ENV });
   const plates = (L.plates || []).map(p => {
-    const y = topAt(p.x, p.z), m = new THREE.Mesh(new THREE.BoxGeometry(1.6, .12, 1.6), plateMat()); m.position.set(p.x, y + .04, p.z); m.receiveShadow = true; scene.add(m);
+    const y = topAt(p.x, p.z), m = new THREE.Mesh(new THREE.BoxGeometry(p.w || 1.6, .12, p.d || 1.6), plateMat()); m.position.set(p.x, y + .04, p.z); m.receiveShadow = true; scene.add(m);
     return { ...p, y, m, on: false };
   });
   const gates = (L.gates || []).map(G => {
@@ -2035,7 +2112,7 @@ function buildPuzzle(L) {
       else { staticBurst(300); b.pos.copy(checkpoint); b.vel.set(0, 0, 0); }
     }
     for (const p of plates) {
-      p.on = bodies.some(b => b.grounded && b.R.root.visible && Math.abs(b.pos.x - p.x) < .8 && Math.abs(b.pos.z - p.z) < .8 && Math.abs(b.pos.y - p.y) < .06);
+      p.on = bodies.some(b => b.grounded && b.R.root.visible && Math.abs(b.pos.x - p.x) < (p.w || 1.6) / 2 && Math.abs(b.pos.z - p.z) < (p.d || 1.6) / 2 && Math.abs(b.pos.y - p.y) < .06);
       p.m.position.y = p.y + (p.on ? .01 : .04); p.m.material.emissiveIntensity += ((p.on ? .8 : 0) - p.m.material.emissiveIntensity) * Math.min(1, dt * 10);
     }
     for (const g of gates) {
@@ -2047,7 +2124,7 @@ function buildPuzzle(L) {
       crystal.got = true; crystal.g.visible = false; abilities.add(crystal.kind); syncHud(); chime(980);
       toast(crystal.kind + '.crystal', crystal.kind === 'copy' ? 'Copy acquired. Drag a box around yourself, choose Copy (Ctrl+C), then click a turquoise square.' : 'Cut acquired. Drag a box around yourself, choose Cut (Ctrl+X), then click an orange ring to move there.', null, 10);
     }
-    if (exit && !done && bodies.some(b => b.grounded && b.R.root.visible && Math.hypot(b.pos.x - exit.x, b.pos.z - exit.z) < .9 && Math.abs(b.pos.y - exit.y) < .1)) {
+    if (exit && !done && bodies.some(b => b.grounded && b.R.root.visible && Math.hypot(b.pos.x - exit.x, b.pos.z - exit.z) < 1.1 && Math.abs(b.pos.y - exit.y) < .1)) {
       done = t; solved = 1; chime(523); setTimeout(() => chime(784), 250); toast('exit.lnk', 'Level clear.', V(exit.x, exit.y + 3, exit.z), 3);
       setTimeout(() => { if (active) goNext(L.next); }, 1600);
     }
@@ -2092,6 +2169,16 @@ const SCENES = [
   { id: 'lvcut',   name: 'Cut',           note: 'Pick up the cut crystal. Drag a box around yourself, choose Cut, then click an orange ring to move there.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvcut), walk: true },
   { id: 'lvboth',  name: 'Copy and cut',  note: 'Copies go on turquoise squares, cuts go on orange rings. Hold all three plates at once.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvboth), walk: true },
   { id: 'lvhead',  name: 'Heads up',      note: 'Hold 2 and point to throw your head over a wall; hold 1 and point to roll it under a bar. Your body grows back where it stops.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvhead), walk: true },
+  { id: 'lvrelay', name: 'Relay', note: 'Copy yourself onto the turquoise square, then walk towards the bridge. The wall keeps the copy on the plate.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvrelay), walk: true },
+  { id: 'lvchain', name: 'Stepping rings', note: 'Cut yourself from ring to ring, then step on the plate to open the last bridge.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvchain), walk: true },
+  { id: 'lvhops', name: 'Hops', note: 'Throw over the wall and across the gap, roll under both barriers, then throw up to the exit.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvhops), walk: true },
+  { id: 'lvaim', name: 'Dead stop', note: 'Hold 1 and point at the plate: the head stops where you point.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvaim), walk: true },
+  { id: 'lvcutcopy', name: 'Cut the copy', note: 'Copy yourself, then cut the copy onto the orange ring so it holds the plate.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvcutcopy), walk: true },
+  { id: 'lvlanes', name: 'Three lanes', note: 'Two copies, three plates. Jump once to clear the gap in the third lane.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvlanes), walk: true },
+  { id: 'lvlineup', name: 'Line up', note: 'Use the short wall to line up your copy with you, step aside, then jump the gap together.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvlineup), walk: true },
+  { id: 'lvleap', name: 'Leapfrog', note: 'A copy holds the first bridge; cut it forward to hold the second.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvleap), walk: true },
+  { id: 'lvdelete', name: 'Back to one', note: 'Copy to open the long bridge, then delete the copy so your head can travel again.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvdelete), walk: true },
+  { id: 'lvfinal', name: 'All together', note: 'Copy, cut, hold three plates, delete both copies, throw, then roll.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvfinal), walk: true },
   { id: 'lights',  name: 'Lights on',     note: 'Text card.', ov: 'cards', lines: ['Then who kept the lights on?'] },
   { id: 'reveal',  name: 'Halcyon',       note: 'Character reveal, low-poly and turning.', ov: 'revealOv', build: buildReveal },
 ];
