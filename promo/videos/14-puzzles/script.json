@@ -1,9 +1,9 @@
 [
- {"say": "At the top of the climb, the pipe now carries you on to five puzzle levels."},
- {"say": "The first holds a crystal that lets you copy yourself onto any square with a turquoise border."},
- {"say": "Every copy moves when you move, so one of you can hold a plate down while the other crosses the bridge it opens."},
- {"say": "On the next level, a single jump has to carry both of you over your own gaps."},
- {"say": "Orange rings take cuts instead. Cut yourself, click a ring, and you are standing on it."},
- {"say": "One level needs three of you at once, so you copy, cut the copy across, and copy again."},
- {"say": "The last asks you to throw your head over a wall, and roll it under a barrier."}
+ {"say": "After the climb, the pipe leads to five new puzzle levels."},
+ {"say": "In the first level, a crystal unlocks copying, and copies can be placed on squares with a turquoise border."},
+ {"say": "Copies move together, so one copy holds a plate down while the other walks across the bridge it opens."},
+ {"say": "In the second level, the two lanes have gaps in different places, so the jump has to be timed for both runners."},
+ {"say": "The third level adds cutting, which moves a runner onto an orange ring."},
+ {"say": "The fourth level needs three runners on three plates at the same time, using both copy and cut."},
+ {"say": "In the last level, the runner throws his head over a wall and rolls it under a barrier."}
 ]

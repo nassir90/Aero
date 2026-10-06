@@ -85,7 +85,7 @@ for (const [name, mode] of [['sky_edge', 'edge'], ['sky_seam', 'seam'], ['sky_ma
   SPEC.s13 = { app: 'pages', page: `stills.html?set=v06_lumpy:.5:${r2(d[2])}`, seconds: r2(d[2]) + .2, ready: () => window.__ready && window.__ready(), annotate: () => ({ state: window.__state }), inject: null, setup: null, each: null }; }
 const PUZZLE_RUN = [
   ['pipe'], ['scene', 'Copy crystal'], ['wait', 1.4],
-  ['hold', 'KeyW', .3], ['wait', 1.0], ['select', 0], ['clip', 'copy'], ['paste', 0], ['wait', 1.0], ['hold', 'KeyW', 1.0], ['wait', 3.5], ['holdUntil', 'KeyW', 'done'],
+  ['hold', 'KeyW', .3], ['wait', 1.0], ['select', 0], ['clip', 'copy'], ['paste', 0], ['wait', 1.0], ['hold', 'KeyW', 1.0], ['wait', 6.0], ['holdUntil', 'KeyW', 'done'],
   ['scene', 'In sync'], ['wait', 1.4], ['select', 0], ['clip', 'copy'], ['paste', 0], ['wait', 1.0],
   ['key', 'KeyW', true], ['jumpWhen', 'z<-3.5'], ['until', 'done'], ['key', 'KeyW', false],
   ['scene', 'Cut'], ['wait', 1.4], ['hold', 'KeyW', .3], ['wait', 1.0], ['select', 0], ['clip', 'cut'], ['paste', 0], ['wait', 1.2], ['select', 0], ['clip', 'cut'], ['paste', 1], ['wait', 1.0], ['holdUntil', 'KeyW', 'done', 3],
