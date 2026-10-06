@@ -126,7 +126,7 @@ def lvhead(g):
     if z(d) < -11.7: return False, f"walked through the bar, z {z(d)}"
     g.head("Digit1", 0, 0, -17); d = g.dbg()
     if z(d) > -12.5: return False, f"roll under the bar failed, z {z(d)}"
-    g.hold("KeyW", 3, until=lambda d: z(d) < -27.2); g.head("Digit2", 0, 2.8, -30); d = g.dbg()
+    g.hold("KeyW", 3, until=lambda d: z(d) < -26.6); g.head("Digit2", 0, 2.8, -30); d = g.dbg()
     if d["crew"][0]["pos"][1] < 2.7: return False, f"throw up to the last block failed, pos {d['crew'][0]['pos']}"
     g.hold("KeyW", 1.5, until=lambda d: d["done"]); d = g.dbg()
     return d["done"], f"pos {d['crew'][0]['pos']}"

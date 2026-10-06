@@ -265,7 +265,7 @@ html:not(.capture) .bar p { color: #c4c8e6; }
     </div>
     <div class="controls">
       <button id="newBtn" type="button">New game</button>
-      <button id="skipBtn" type="button" hidden>Skip to game ›</button>
+      <button id="skipBtn" type="button" style="visibility: hidden">Skip to game ›</button>
       <button id="prevBtn" type="button" aria-label="Previous scene">&lt;</button>
       <select id="sceneSel" aria-label="Jump to scene"></select>
       <button id="nextBtn" type="button" aria-label="Next scene">&gt;</button>
@@ -2157,7 +2157,7 @@ async function goNext(id) {
 const PLAY_NOTE = 'WASD moves, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it. Drag to look. Find 4 memories, then roll your head into the pipe to reach the puzzle levels.';
 const SCENES = [
   { id: 'title',   name: 'Title',         note: 'Hover the sea to stir it; click to drop a ripple.', ov: 'titleOv', build: buildTitle },
-  { id: 'open',    name: 'Cold open',     note: 'Text cards. Click or Enter skips, Esc goes to the game.', ov: 'cards', lines: ['Did anyone ever log out?', 'Or did we just stop coming back?'] },
+  { id: 'open',    name: 'Cold open',     note: 'Text cards. Click or Enter skips, Esc goes to the game.', ov: 'cards', lines: ['Or did we just stop coming back?'] },
   { id: 'copy',    name: 'Copy',          note: 'Log in to spawn him. Drag a box around him and pick Copy, Cut or Delete; click to paste. WASD walks everyone, Space jumps. Tap 1 / 2 to roll or throw heads; hold 1 / 2 and move the mouse to aim, add Shift to keep the crew in formation.', ov: 'copyOv', build: buildCopy, walk: true },
   { id: 'arrive',  name: 'Arrival',       note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: null, build: buildArrival, walk: true },
   { id: 'tape',    name: 'The lake',      note: 'Found tape: square, blown out, pixel subtitle.', ov: 'tapeOv', build: buildTape },
@@ -2213,7 +2213,7 @@ async function enter(i, id, hold) {
   if (d.id === 'reveal') chime(660);
   if (d.lines) await card(d.lines, id, hold);
 }
-function storyMode(on) { stage.classList.toggle('story', on); $('#skipBtn').hidden = !on; }
+function storyMode(on) { stage.classList.toggle('story', on); $('#skipBtn').style.visibility = on ? '' : 'hidden'; }
 function jumpTo(i) { const id = ++run; storyMode(false); startAudio(); staticBurst(160); enter(i, id, true).catch(() => {}); }
 function skipToGame() { jumpTo(CLIMB); }
 async function newGame() {
@@ -2234,6 +2234,14 @@ $('#prevBtn').onclick = () => jumpTo(cur - 1);
 $('#nextBtn').onclick = () => jumpTo(cur + 1);
 $('#newBtn').onclick = newGame;
 $('#skipBtn').onclick = skipToGame;
+function fitBar() {
+  const t = $('.bar-text'), nm = $('#sceneName'), nt = $('#sceneNote'), was = [nm.textContent, nt.textContent];
+  t.style.minHeight = ''; let h = 0;
+  for (const d of SCENES) { nm.textContent = d.name; nt.textContent = d.note; h = Math.max(h, t.offsetHeight); }
+  [nm.textContent, nt.textContent] = was; t.style.minHeight = h + 'px';
+}
+function fitAll() { fitBar(); fit(); fitBar(); fit(); }
+addEventListener('resize', fitAll); fitAll(); if (document.fonts) document.fonts.ready.then(fitAll);
 $('#cards').addEventListener('click', () => { advance = true; });
 $('#again').onclick = () => { get(CLIMB).reset(); jumpTo(CLIMB); };
 async function finale() {
