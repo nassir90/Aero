@@ -666,7 +666,7 @@ function aimGuide() {
     hide() { g.visible = false; } };
 }
 function headTravel(R, o) {
-  let st = null; const e = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u), RADIUS = .2, UP = new THREE.Vector3(0, 1, 0);
+  let st = null, lastAim = null; const e = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u), RADIUS = .2, UP = new THREE.Vector3(0, 1, 0);
   function reform(at) { o.land(at); st = { kind: 'reform', t: 0, from: R.head.position.clone(), at: at.clone() }; }
   const guide = aimGuide();
   function plan(from, facing, dest) {
@@ -680,10 +680,11 @@ function headTravel(R, o) {
     const from = R.head.getWorldPosition(new THREE.Vector3()), pl = plan(from, facing, dest), dir = pl.dir, path = [];
     if (kind === 'throw') {
       const to = o.target(from, dir, dest);
-      const end = to || from.clone().addScaledVector(dir, 2.4).setY((o.ground(from.x, from.z, from.y) ?? from.y - 2) + RADIUS);
+      let end = to || (o.hit && dest ? new THREE.Vector3(dest.x, dest.y + RADIUS, dest.z) : from.clone().addScaledVector(dir, 2.4).setY((o.ground(from.x, from.z, from.y) ?? from.y - 2) + RADIUS)), hit = false;
       const arc = 1.6 + from.distanceTo(end) * .22;
       for (let i = 0; i <= 28; i++) { const u = i / 28, p = new THREE.Vector3().lerpVectors(from, end, u); p.y += Math.sin(Math.PI * u) * arc; path.push(p); }
-      return { path, end: end.clone().setY(end.y - RADIUS), ok: !!to };
+      if (o.hit) { const k = path.findIndex((q, i) => i > 0 && o.hit(q)); if (k > 0) { path.length = Math.max(2, k); end = path[path.length - 1].clone(); hit = true; } }
+      return { path, end: end.clone().setY(end.y - RADIUS), ok: !!to && !hit };
     }
     const p = from.clone(), g0 = o.ground(from.x, from.z, from.y) ?? from.y - 2; p.y = g0 + RADIUS; path.push(p.clone());
     let v = pl.v, vy = 0, ok = true; const dt = 1 / 60;
@@ -701,7 +702,8 @@ function headTravel(R, o) {
     return { path, end: p.clone().setY(p.y - RADIUS), ok };
   }
   return {
-    aim(kind, facing, t, dest) { if (guide.g.parent !== R.root.parent) R.root.parent.add(guide.g); const r = preview(kind, facing, dest); guide.show(r.path, r.end, r.ok, t, kind === 'roll' ? AIM_RING : 0); },
+    aim(kind, facing, t, dest) { if (guide.g.parent !== R.root.parent) R.root.parent.add(guide.g); const r = preview(kind, facing, dest); lastAim = r; guide.show(r.path, r.end, r.ok, t, kind === 'roll' ? AIM_RING : 0); },
+    lastAim: () => lastAim,
     unaim() { guide.hide(); },
     active: () => !!st,
     kind: () => st && st.kind,
@@ -1752,7 +1754,7 @@ function buildPuzzle(L) {
     const g = platform(w, d, SLAB, 70, false); g.position.set(x, top, z); scene.add(g);
     const b = { g, x, z, top, w, d, h: SLAB }; cols.push(b, { pillar: true, x, z, w: w * .62, d: d * .62, top: top - SLAB, h: 70 }); islands.push(b);
   }
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0xece9ff, roughness: .35, metalness: .1, envMap: ENV, envMapIntensity: .6 });
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0xb9aef5, roughness: .35, metalness: .15, envMap: ENV, envMapIntensity: .7 });
   for (const [x, z, y0, w, d, h] of L.walls || []) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat); m.position.set(x, y0 + h / 2, z); m.castShadow = m.receiveShadow = true; scene.add(m);
     cols.push({ x, z, top: y0 + h, w, d, h, solid: true });
@@ -1761,12 +1763,13 @@ function buildPuzzle(L) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w + .3, h, d), ringMat()); m.position.set(x, y0 + h / 2, z); m.castShadow = true; scene.add(m);
     cols.push({ x, z, top: y0 + h, w, d, h, solid: true });
   }
+  const zs = L.islands.map(b => b[1]), zMin = Math.min(...zs) - 20, zMax = Math.max(...zs) + 10;
   for (let i = 0; i < 16; i++) {
-    const a = rnd(Math.PI * .15, Math.PI * .85) + (i % 2 ? Math.PI : 0), r = rnd(40, 100), w = rnd(2, 7), d = rnd(2, 7), p = platform(w, d, rnd(.5, 3), 80, false);
-    p.position.set(Math.cos(a) * r, rnd(-30, 4), -12 + Math.sin(a) * r * .5 - (i % 2 ? 0 : 40)); p.rotation.y = rnd(0, 1.2); scene.add(p);
+    const w = rnd(2, 7), d = rnd(2, 7), p = platform(w, d, rnd(.5, 3), 80, false);
+    p.position.set((i % 2 ? 1 : -1) * rnd(30, 70), rnd(-30, 6), rnd(zMin, zMax)); p.rotation.y = rnd(0, 1.2); scene.add(p);
   }
   const floaters = [];
-  for (let i = 0; i < 10; i++) { const s = rnd(.5, 1.8), c = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), i % 3 ? MAT.float : MAT.glass); c.position.set(rnd(-40, 40), rnd(-30, -8), rnd(-60, 20)); c.userData.w = rnd(-.3, .3); scene.add(c); floaters.push(c); }
+  for (let i = 0; i < 10; i++) { const s = rnd(.5, 1.8), c = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), i % 3 ? MAT.float : MAT.glass); c.position.set((i % 2 ? 1 : -1) * rnd(22, 45), rnd(-20, 14), rnd(zMin, zMax)); c.userData.w = rnd(-.3, .3); scene.add(c); floaters.push(c); }
   const topAt = (x, z) => { let best = null; for (const b of islands) if (Math.abs(x - b.x) <= b.w / 2 && Math.abs(z - b.z) <= b.d / 2 && (best === null || b.top > best)) best = b.top; return best ?? 0; };
   const glow = c => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: .55, roughness: .2, metalness: .3, envMap: ENV });
   const pads = (L.pads || []).map(p => {
@@ -1850,6 +1853,7 @@ function buildPuzzle(L) {
           if (ox < oz) q.x += Math.sign(q.x - c.x || 1) * ox; else q.z += Math.sign(q.z - c.z || 1) * oz; hit = true; }
         return hit;
       },
+      hit: q => solids().some(c => c.solid && q.y + .2 > c.top - c.h && q.y - .2 < c.top && overlap(c, q.x, q.z, .2)),
       land: at => { b.pos.set(at.x, at.y, at.z); b.vel.set(0, 0, 0); },
       respawn: () => V(checkpoint.x, checkpoint.y, checkpoint.z),
     });
@@ -2063,7 +2067,8 @@ function buildPuzzle(L) {
     enter() { active = true; reset(); }, leave() { active = false; drag = null; cancelCarry(); clearSel(); for (const k in keys) keys[k] = false; popups.splice(0).forEach(pp => pp.el.remove()); },
     debug: () => ({ level: L.name, done: !!done, abilities: [...abilities], crew: bodies.map(b => ({ pos: [b.pos.x, b.pos.y, b.pos.z].map(v => +v.toFixed(2)), grounded: b.grounded, screen: centre(b) })),
       plates: plates.map(p => p.on), gates: gates.map(g => g.open), carry: carry && carry.kind,
-      pads: pads.map(pd => ({ type: pd.type, screen: toFrame(V(pd.x, pd.y, pd.z), cam) })), crystal: crystal && crystal.got }) };
+      pads: pads.map(pd => ({ type: pd.type, screen: toFrame(V(pd.x, pd.y, pd.z), cam) })), crystal: crystal && crystal.got,
+      aim: bodies[0] && bodies[0].travel.lastAim() ? (a => ({ ok: a.ok, path: a.path.map(q => [q.x, q.y, q.z].map(v => +v.toFixed(2))) }))(bodies[0].travel.lastAim()) : null }) };
 }
 async function goNext(id) {
   if (id === 'finale') { finale(); return; }

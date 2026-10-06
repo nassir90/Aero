@@ -136,6 +136,19 @@ def lvhead_no_throw_past_bar(g):
     g.head("Digit2", 0, 0, -16); d = g.dbg()
     return z(d) > -12, f"throwing past the barrier from z {before}: now z {z(d)} (expected still in front of it, > -12)"
 
+def lvhead_beads_stop_at_wall(g):
+    g.hold("KeyW", 1.2); g.pg.keyboard.down("Digit2"); g.step(.05); a = g.proj(0, 0, -6.5); g.pg.mouse.move(a[0] - 20, a[1] - 20); g.step(.05); g.pg.mouse.move(*a, steps=4); g.step(.2)
+    d = g.dbg(); g.pg.keyboard.press("Escape"); g.pg.keyboard.up("Digit2")
+    if not d["aim"]: return False, "no aim guide"
+    inside = [q for q in d["aim"]["path"] if abs(q[0]) < 3 and -2.9 < q[2] < -2.5 and q[1] < 3.2]
+    far = min(q[2] for q in d["aim"]["path"])
+    return not d["aim"]["ok"] and not inside and far > -3.2, f"close to the wall at z {z(d)}: aim ok={d['aim']['ok']} (expected False), beads inside the wall {len(inside)}, furthest bead z {far} (expected to stop before -2.9)"
+
+def lvhead_beads_clear_from_back(g):
+    g.pg.keyboard.down("Digit2"); g.step(.05); a = g.proj(0, 0, -6.5); g.pg.mouse.move(a[0] - 20, a[1] - 20); g.step(.05); g.pg.mouse.move(*a, steps=4); g.step(.2)
+    d = g.dbg(); g.pg.keyboard.up("Digit2"); far = min(q[2] for q in d["aim"]["path"])
+    return d["aim"]["ok"] and far < -5, f"from the start: aim ok={d['aim']['ok']} (expected True), furthest bead z {far}"
+
 def lvboth_jump(g):
     g.pg.keyboard.down("KeyD"); g.step(.25); g.pg.keyboard.down("Space"); g.step(.5); g.pg.keyboard.up("Space"); g.step(1.2); g.pg.keyboard.up("KeyD"); d = g.dbg()
     return d["crew"][0]["pos"][1] < -1, f"running jump toward the cut island: pos {d['crew'][0]['pos']} (expected to fall short)"
@@ -167,6 +180,9 @@ def shots(g):
     if lv == "In sync": g.select(0); g.clip("copy"); g.paste(0); g.step(.6); shot(g, lv + "-2-two")
     if lv == "Cut": g.hold("KeyW", .3); g.select(0); g.clip("cut"); p = g.client(g.dbg()["pads"][0]["screen"]); g.pg.mouse.move(*p, steps=3); g.step(.3); shot(g, lv + "-2-cutting")
     if lv == "Copy and cut": g.select(0); g.clip("copy"); g.paste(0); g.select(1); g.clip("cut"); g.paste(1); g.select(0); g.clip("copy"); g.paste(0); g.step(.6); shot(g, lv + "-2-three"); g.hold("KeyW", 1.0); shot(g, lv + "-3-open")
+    if lv == "Heads up":
+        g.hold("KeyW", .45); g.pg.keyboard.down("Digit2"); g.step(.05); a = g.proj(0, 0, -6.5); g.pg.mouse.move(a[0] - 20, a[1] - 20); g.step(.05); g.pg.mouse.move(*a, steps=4); g.step(.3); shot(g, lv + "-1b-blocked")
+        g.pg.keyboard.press("Escape"); g.pg.keyboard.up("Digit2"); g.hold("KeyS", .45); g.step(.3)
     if lv == "Heads up": g.pg.keyboard.down("Digit2"); g.step(.05); a = g.proj(0, 0, -6.5); g.pg.mouse.move(*a, steps=4); g.step(.3); shot(g, lv + "-2-aim"); g.pg.keyboard.up("Digit2"); g.step(2); g.hold("KeyW", 1.5, until=lambda d: z(d) < -10.6); g.step(.3); shot(g, lv + "-3-barrier")
     return True, "shots"
 
@@ -177,7 +193,7 @@ def lvhead_walls(g):
     return a > -2.9 and b > -2.9 and c > -2.9, f"walk z {a}, jump z {b}, roll z {c} (all expected to stop at the wall, > -2.9)"
 
 TESTS = [("title", "every_scene"), ("lvcopy", "lvcopy"), ("lvcopy", "lvcopy_without_copy"), ("lvsync", "lvsync"), ("lvsync", "lvsync_one_body"), ("lvcut", "lvcut"), ("lvcut", "lvcut_jump"),
-         ("lvboth", "lvboth"), ("lvboth", "lvboth_two_bodies"), ("lvhead", "lvhead"), ("lvhead", "lvhead_walls"), ("lvhead", "lvhead_no_throw_past_bar"), ("lvboth", "lvboth_jump"), ("climb", "chain_climb"), ("lvhead", "chain_end"), ("lvcopy", "shots"), ("lvsync", "shots"), ("lvcut", "shots"), ("lvboth", "shots"), ("lvhead", "shots")]
+         ("lvboth", "lvboth"), ("lvboth", "lvboth_two_bodies"), ("lvhead", "lvhead"), ("lvhead", "lvhead_walls"), ("lvhead", "lvhead_no_throw_past_bar"), ("lvboth", "lvboth_jump"), ("lvhead", "lvhead_beads_stop_at_wall"), ("lvhead", "lvhead_beads_clear_from_back"), ("climb", "chain_climb"), ("lvhead", "chain_end"), ("lvcopy", "shots"), ("lvsync", "shots"), ("lvcut", "shots"), ("lvboth", "shots"), ("lvhead", "shots")]
 only = sys.argv[1:]
 try:
   with sync_playwright() as pw:
