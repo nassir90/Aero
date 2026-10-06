@@ -299,7 +299,7 @@ function fit() {
   const fw = CAPTURE ? Math.min(innerWidth, innerHeight * AR) : Math.max(280, Math.min(innerWidth - 32, (innerHeight - bar.offsetHeight - 30) * AR));
   stage.style.setProperty('--fw', Math.floor(fw) + 'px');
 }
-addEventListener('resize', fit); fit();
+fit();
 
 const canvas = $('#gl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
@@ -516,12 +516,6 @@ function rectRing(ow, od, iw, id, depth) {
   s.holes.push(h);
   const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: false }); g.rotateX(-Math.PI / 2); return g;
 }
-const ringTex = (() => {
-  const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
-  const g = x.createLinearGradient(0, 0, 128, 128); g.addColorStop(0, '#7b4cff'); g.addColorStop(.5, '#2fd4ff'); g.addColorStop(1, '#8f5cff');
-  x.fillStyle = g; x.fillRect(0, 0, 128, 128);
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping; t.repeat.set(.42, .42); t.encoding = THREE.sRGBEncoding; return t;
-})();
 const RING_COLS = ['#7b4cff', '#2fd4ff', '#5a6bff', '#a45cff', '#38e6f0', '#8f7dff', '#4fa8ff', '#c07bff'];
 const RING_POOL = Array.from({ length: 14 }, () => {
   const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), R = Math.random;
@@ -537,7 +531,6 @@ const ringMat = () => RING_POOL[(Math.random() * RING_POOL.length) | 0];
 const MAT = {
   top: new THREE.MeshStandardMaterial({ color: 0xfbfbff, roughness: .45, metalness: 0, envMap: ENV, envMapIntensity: .45 }),
   side: new THREE.MeshStandardMaterial({ color: 0xd6d0fa, roughness: .5, metalness: 0, envMap: ENV, envMapIntensity: .4 }),
-  ringDefault: new THREE.MeshStandardMaterial({ map: ringTex, roughness: .05, metalness: .72, envMap: ENV, envMapIntensity: 1.9 }),
   float: new THREE.MeshStandardMaterial({ color: 0xd4cdf3, roughness: .5, envMap: ENV, envMapIntensity: .4 }),
   glass: new THREE.MeshPhysicalMaterial({ color: 0xdfe4ff, roughness: .04, metalness: .05, transparent: true, opacity: .38, envMap: ENV, envMapIntensity: 1.4, clearcoat: 1, depthWrite: false }),
 };
@@ -601,7 +594,54 @@ async function staticBurst(ms = 400) {
   sc.style.opacity = 0;
 }
 
-function toFrame(v, cam) { const p = v.clone().project(cam); return { x: (p.x * .5 + .5) * frame.clientWidth, y: (-p.y * .5 + .5) * frame.clientHeight, z: p.z }; }
+const _tf = new THREE.Vector3(), _sb = new THREE.Vector3();
+function toFrame(v, cam) { const p = _tf.copy(v).project(cam); return { x: (p.x * .5 + .5) * frame.clientWidth, y: (-p.y * .5 + .5) * frame.clientHeight, z: p.z }; }
+
+const BODY_RAD = .32, BODY_HT = 2.2;
+const overlap = (b, px, pz, r) => Math.abs(px - b.x) < b.w / 2 + r && Math.abs(pz - b.z) < b.d / 2 + r;
+function stepKinematic(s, dt, want, jump, hcols, o = {}) {
+  const p = s.pos, v = s.vel, accel = s.grounded ? 40 : 14, speed = 6.2, eps = o.eps || 0, vcols = o.vcols || hcols;
+  v.x += (want.x * speed - v.x) * Math.min(1, accel * dt / speed);
+  v.z += (want.z * speed - v.z) * Math.min(1, accel * dt / speed);
+  s.coyote = s.grounded ? .12 : s.coyote - dt;
+  if (jump && !s.jumpHeld && s.coyote > 0) { v.y = 9.2; s.coyote = 0; s.grounded = false; }
+  s.jumpHeld = !!jump;
+  if (!jump && v.y > 3) v.y -= 40 * dt;
+  v.y -= 24 * dt;
+  for (const axis of ['x', 'z']) {
+    p[axis] += v[axis] * dt;
+    for (const c of hcols) {
+      if (p.y + BODY_HT <= c.top - c.h || p.y >= c.top - .3) continue;
+      if (!overlap(c, p.x, p.z, BODY_RAD)) continue;
+      const cc = axis === 'x' ? c.x : c.z, half = (axis === 'x' ? c.w : c.d) / 2 + BODY_RAD;
+      p[axis] = p[axis] < cc ? cc - half - eps : cc + half + eps; v[axis] = 0;
+    }
+  }
+  const prevY = p.y; p.y += v.y * dt; s.grounded = false; s.ground = null;
+  for (const c of vcols) {
+    if ((o.skip && o.skip(c)) || !overlap(c, p.x, p.z, BODY_RAD * .5)) continue;
+    if (v.y <= 0 && prevY >= c.top - .05 && p.y <= c.top) { p.y = c.top; v.y = 0; s.grounded = true; s.ground = c; if (o.land) o.land(c); }
+    else if (v.y > 0 && prevY + BODY_HT <= c.top - c.h && p.y + BODY_HT > c.top - c.h) { p.y = c.top - c.h - BODY_HT; v.y = 0; }
+  }
+}
+const smooth = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u);
+function marquee(el) {
+  return { rect(x0, y0, x1, y1) { el.style.display = 'block'; el.style.left = Math.min(x0, x1) + 'px'; el.style.top = Math.min(y0, y1) + 'px'; el.style.width = Math.abs(x1 - x0) + 'px'; el.style.height = Math.abs(y1 - y0) + 'px'; },
+           hide() { el.style.display = 'none'; } };
+}
+function screenCentre(p, cam) { const a = toFrame(_sb.set(p.x, p.y + 2.15, p.z), cam), b = toFrame(p, cam); return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+function screenBounds(items, posOf, cam) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const it of items) { const p = posOf(it);
+    for (const dx of [-.45, .45]) for (const dz of [-.35, .35]) for (const y of [-.06, 2.2]) {
+      const f = toFrame(_sb.set(p.x + dx, p.y + y, p.z + dz), cam); x0 = Math.min(x0, f.x); y0 = Math.min(y0, f.y); x1 = Math.max(x1, f.x); y1 = Math.max(y1, f.y); } }
+  return x0 < Infinity ? { x0, y0, x1, y1 } : null;
+}
+function placeBeside(el, r) {
+  const w = el.offsetWidth, h = el.offsetHeight, gap = 10;
+  el.style.left = (r.x1 + gap + w <= frame.clientWidth - 8 ? r.x1 + gap : Math.max(8, r.x0 - gap - w)) + 'px';
+  el.style.top = Math.max(8, Math.min(frame.clientHeight - h - 8, r.y0)) + 'px';
+}
 
 const KEYS = {}; let inputOn = false;
 const KEYMAP = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r', Space: 'j', ShiftLeft: 'run', ShiftRight: 'run',
@@ -640,13 +680,15 @@ function aimTracker() {
     get mouse() { return AIM.down || follow; },
   };
 }
-const aimRay = (cam, p) => { const r = new THREE.Raycaster(); r.setFromCamera(new THREE.Vector2(p.x / frame.clientWidth * 2 - 1, 1 - p.y / frame.clientHeight * 2), cam); return r.ray; };
+const _ray = new THREE.Raycaster(), _ndc = new THREE.Vector2();
+const aimRay = (cam, p) => { _ray.setFromCamera(_ndc.set(p.x / frame.clientWidth * 2 - 1, 1 - p.y / frame.clientHeight * 2), cam); return _ray.ray; };
 const AIM_DOTS = 22, AIM_R = .12, AIM_RING = .34, AIM_PLANE = .09;
+const AIM_DOT_GEO = new THREE.SphereGeometry(AIM_R * .92, 12, 8), AIM_RING_GEO = new THREE.TorusGeometry(AIM_RING, .06, 10, 40);
 function aimGuide() {
   const g = new THREE.Group(); g.visible = false;
-  const bead = silver(false), dots = new THREE.InstancedMesh(new THREE.SphereGeometry(AIM_R * .92, 12, 8), bead, AIM_DOTS);
+  const bead = silver(false), dots = new THREE.InstancedMesh(AIM_DOT_GEO, bead, AIM_DOTS);
   dots.frustumCulled = false; g.add(dots);
-  const ringT = .06, mark = new THREE.Mesh(new THREE.TorusGeometry(AIM_RING, ringT, 10, 40), silver(false)); mark.rotation.x = -Math.PI / 2; g.add(mark);
+  const mark = new THREE.Mesh(AIM_RING_GEO, silver(false)); mark.rotation.x = -Math.PI / 2; g.add(mark);
   const M = new THREE.Matrix4(), P = new THREE.Vector3(), Q = new THREE.Quaternion(), S = new THREE.Vector3();
   const OK_TINT = new THREE.Color(0xe6e6ec), NO_TINT = new THREE.Color(0xffb8cc);
   return { g,
@@ -663,10 +705,11 @@ function aimGuide() {
       dots.instanceMatrix.needsUpdate = true;
       mark.position.set(end.x, end.y + AIM_PLANE, end.z); mark.rotation.z = t * .6; mark.scale.setScalar(1 + Math.sin(t * 7) * .08);
     },
-    hide() { g.visible = false; } };
+    hide() { g.visible = false; },
+    dispose() { if (g.parent) g.parent.remove(g); bead.dispose(); mark.material.dispose(); } };
 }
 function headTravel(R, o) {
-  let st = null, lastAim = null; const e = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u), RADIUS = .2, UP = new THREE.Vector3(0, 1, 0);
+  let st = null, lastAim = null; const e = smooth, RADIUS = .2, UP = new THREE.Vector3(0, 1, 0);
   function reform(at) { o.land(at); st = { kind: 'reform', t: 0, from: R.head.position.clone(), at: at.clone() }; }
   const guide = aimGuide();
   function plan(from, facing, dest) {
@@ -705,6 +748,7 @@ function headTravel(R, o) {
     aim(kind, facing, t, dest) { if (guide.g.parent !== R.root.parent) R.root.parent.add(guide.g); const r = preview(kind, facing, dest); lastAim = r; guide.show(r.path, r.end, r.ok, t, kind === 'roll' ? AIM_RING : 0); },
     lastAim: () => lastAim,
     unaim() { guide.hide(); },
+    dispose() { guide.dispose(); },
     active: () => !!st,
     kind: () => st && st.kind,
     abort() { st = null; },
@@ -806,9 +850,9 @@ function walker(R, clamp, cam, group) {
     if (aiming) { R.root.updateMatrixWorld(true); if (track.mouse && !aimAt) travel.unaim(); else travel.aim(aiming, facing, t, aimAt); }
   };
   step.height = () => h;
-  step.travelling = () => travel.active();
   step.focus = () => travel.active() ? R.head.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 1.3 - R.headY, 0)) : R.root.position.clone().add(new THREE.Vector3(0, 1.3 - h, 0));
   step.cancel = () => { aiming = null; travel.unaim(); };
+  step.dispose = () => travel.dispose();
   step.facing = () => facing;
   step.setFacing = f => { facing = f; R.root.rotation.y = f; };
   step.settled = () => !travel.active() && h === 0;
@@ -906,7 +950,7 @@ function buildCopy() {
       alive.forEach(r => {
         r.merge = null;
         if (r === keep) { r.walk.setFacing(A.yaw); r.phase = ((A.phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2); return; }
-        r.dying = true; r.flick = 0; r.walk.cancel(); scene.remove(r.root); r.dead = true;
+        r.dying = true; r.flick = 0; r.walk.cancel(); r.walk.dispose(); scene.remove(r.root); r.dead = true;
         if (sel.includes(r)) { sel = []; clearSel(); }
       });
       merges.splice(gi, 1); chime(880);
@@ -927,9 +971,8 @@ function buildCopy() {
   login.onclick = () => { if (active) spawn(); };
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
   function box(x) { const a = toFrame(V(x - .66, 2.5, 0), cam), b = toFrame(V(x + .66, -.08, 0), cam); return { x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y }; }
-  const ease = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u);
-  const rect = (x0, y0, x1, y1) => { mq.style.display = 'block'; mq.style.left = Math.min(x0, x1) + 'px'; mq.style.top = Math.min(y0, y1) + 'px'; mq.style.width = Math.abs(x1 - x0) + 'px'; mq.style.height = Math.abs(y1 - y0) + 'px'; };
-  const hideRect = () => { mq.style.display = 'none'; };
+  const ease = smooth;
+  const { rect, hide: hideRect } = marquee(mq);
   let mode = 'demo', active = false, now = 0;
 
   const hand = new THREE.Vector3(); let S = null, dragging = false;
@@ -972,18 +1015,11 @@ function buildCopy() {
   function resetPose(r) { r.hips.position.y = .98; r.spine.rotation.x = 0; r.shL.rotation.z = -.1; r.shR.rotation.z = .1; r.root.visible = true; }
   function toPlay() { if (mode === 'play') return; mode = 'play'; if (lead) resetPose(lead); if (demoGhost) demoGhost.root.visible = false; demoMargin = null; hideRect(); }
 
-  const ray = new THREE.Raycaster(), floorPlane = new THREE.Plane(V(0, 1, 0), 0);
-  const px = e => { const r = frame.getBoundingClientRect(); return { x: (e.clientX - r.left) * frame.clientWidth / r.width, y: (e.clientY - r.top) * frame.clientHeight / r.height }; };
-  const floorAt = p => { ray.setFromCamera(new THREE.Vector2(p.x / frame.clientWidth * 2 - 1, 1 - p.y / frame.clientHeight * 2), cam); return ray.ray.intersectPlane(floorPlane, new THREE.Vector3()); };
-  const centre = r => { const p = r.root.position, a = toFrame(V(p.x, p.y + 2.15, p.z), cam), b = toFrame(V(p.x, p.y, p.z), cam); return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
+  const floorPlane = new THREE.Plane(V(0, 1, 0), 0);
+  const floorAt = p => aimRay(cam, p).intersectPlane(floorPlane, new THREE.Vector3());
+  const centre = r => screenCentre(r.root.position, cam);
   let mouse = null, drag = null, sel = [], selRect = null, carry = null, margin = null;
-  const bounds = rs => {
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (const r of rs) { const p = r.root.position;
-      for (const dx of [-.45, .45]) for (const dz of [-.35, .35]) for (const y of [-.06, 2.2]) {
-        const f = toFrame(V(p.x + dx, p.y + y, p.z + dz), cam); x0 = Math.min(x0, f.x); y0 = Math.min(y0, f.y); x1 = Math.max(x1, f.x); y1 = Math.max(y1, f.y); } }
-    return x0 < Infinity ? { x0, y0, x1, y1 } : null;
-  };
+  const bounds = rs => screenBounds(rs, r => r.root.position, cam);
   const around = (rs, m = margin) => { const b = bounds(rs); if (!b || !m) return null; const k = b.y1 - b.y0;
     return { x0: b.x0 - m.l * k, y0: b.y0 - m.t * k, x1: b.x1 + m.r * k, y1: b.y1 + m.b * k }; };
   let ghosts = [];
@@ -1008,12 +1044,7 @@ function buildCopy() {
   function openMenu() {
     ctx.classList.add('on'); placeMenu();
   }
-  function placeMenu() {
-    const w = ctx.offsetWidth, h = ctx.offsetHeight, gap = 10;
-    const x = selRect.x1 + gap + w <= frame.clientWidth - 8 ? selRect.x1 + gap : Math.max(8, selRect.x0 - gap - w);
-    ctx.style.left = x + 'px';
-    ctx.style.top = Math.max(8, Math.min(frame.clientHeight - h - 8, selRect.y0)) + 'px';
-  }
+  function placeMenu() { placeBeside(ctx, selRect); }
   function begin(kind) {
     if (!sel.length || carry) return; ctx.classList.remove('on');
     if (kind === 'delete') { sel.forEach(r => { r.flick = now + .35; r.hideAfter = true; r.dying = true; }); sel = []; clearSel(); chime(300); return; }
@@ -1037,14 +1068,14 @@ function buildCopy() {
   }
   ov.addEventListener('pointerdown', e => {
     if (!active || e.target.closest('button, .ctx')) return;
-    toPlay(); const p = px(e); mouse = p;
+    toPlay(); const p = framePx(e); mouse = p;
     if (carry) { paste(p); return; }
     clearSel(); drag = { x0: p.x, y0: p.y }; try { ov.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault();
   });
-  ov.addEventListener('pointermove', e => { mouse = px(e); if (drag) rect(drag.x0, drag.y0, mouse.x, mouse.y); });
+  ov.addEventListener('pointermove', e => { mouse = framePx(e); if (drag) rect(drag.x0, drag.y0, mouse.x, mouse.y); });
   ov.addEventListener('pointerup', e => {
     if (!drag) return;
-    const p = px(e), r = { x0: Math.min(drag.x0, p.x), y0: Math.min(drag.y0, p.y), x1: Math.max(drag.x0, p.x), y1: Math.max(drag.y0, p.y) }; drag = null;
+    const p = framePx(e), r = { x0: Math.min(drag.x0, p.x), y0: Math.min(drag.y0, p.y), x1: Math.max(drag.x0, p.x), y1: Math.max(drag.y0, p.y) }; drag = null;
     if (r.x1 - r.x0 < 8 || r.y1 - r.y0 < 8) { hideRect(); return; }
     sel = crew.filter(m => { const c = centre(m); return m.root.visible && c.x > r.x0 && c.x < r.x1 && c.y > r.y0 && c.y < r.y1; });
     if (!sel.length) { hideRect(); return; }
@@ -1077,7 +1108,7 @@ function buildCopy() {
       } else if (lead) { lead.shL.rotation.z = -.1; lead.shR.rotation.z = .1; }
       for (const r of crew) {
         if (r.flick && t < r.flick) r.root.visible = Math.floor(t * 20) % 2 === 0;
-        else if (r.flick) { r.flick = 0; r.root.visible = !r.hideAfter; if (r.dying) { r.walk.cancel(); if (r.head.parent !== r.root) r.head.parent.remove(r.head); scene.remove(r.root); r.dead = true; } }
+        else if (r.flick) { r.flick = 0; r.root.visible = !r.hideAfter; if (r.dying) { r.walk.cancel(); r.walk.dispose(); if (r.head.parent !== r.root) r.head.parent.remove(r.head); scene.remove(r.root); r.dead = true; } }
       }
       if (crew.some(r => r.dead)) { crew = crew.filter(r => !r.dead); lead = crew[0] || null; syncLogin(); }
       if (carry) {
@@ -1180,7 +1211,7 @@ function buildTitle() {
     blobs.push({ g, x: p.x, z: p.z, t0: mat.uniforms.t.value, y: 0, vy: 0, phase: 'wait' });
     bursts.push({ x: p.x, z: p.z, left: 1.2 }); chime(440);
   });
-  const sm = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u);
+  const sm = smooth;
   function stepBlobs(dt, t) {
     for (const b of blobs) {
       const a = t - b.t0, g = b.g, surf = seaY(b.x, b.z, t);
@@ -1404,13 +1435,14 @@ function buildPlayer() {
     else if (c === 'close') win.classList.add('closed');
   });
   dragByTitle(win.querySelector('.vbar'), () => ({ x: win.offsetLeft, y: win.offsetTop }), (x, y) => { win.classList.remove('max'); win.style.left = x + 'px'; win.style.top = y + 'px'; }, () => win);
+  const seekFill = $('#seekFill'), seekThumb = $('#seekThumb'), wmpTime = $('#wmpTime');
   $('#seek').addEventListener('click', e => { const r = $('#seek u').getBoundingClientRect(); clip = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * LEN; });
   return { scene, cam,
     update(dt, t) {
       walk(dt, t);
       if (playing) clip = (clip + dt) % LEN;
       drawTape(cv, clip + 3, '');
-      const f = clip / LEN; $('#seekFill').style.width = (f * 100) + '%'; $('#seekThumb').style.left = (f * 100) + '%'; $('#wmpTime').textContent = fmt(clip) + ' / ' + fmt(LEN);
+      const f = (clip / LEN * 100) + '%', tm = fmt(clip) + ' / ' + fmt(LEN); seekFill.style.width = f; seekThumb.style.left = f; if (wmpTime.textContent !== tm) wmpTime.textContent = tm;
     },
     enter() { win.classList.remove('closed', 'min', 'max'); win.style.left = win.style.top = ''; setPlaying(true); }, leave() {} };
 }
@@ -1493,7 +1525,7 @@ function buildClimb() {
   canvas.addEventListener('pointermove', e => { if (!drag) return; yaw -= (e.clientX - drag.x) * .006; pitch = Math.min(1.1, Math.max(.1, pitch + (e.clientY - drag.y) * .004)); drag = { x: e.clientX, y: e.clientY }; });
   canvas.addEventListener('pointerup', () => { drag = null; });
 
-  const pos = new THREE.Vector3(0, 0, 1.5), vel = new THREE.Vector3(), RAD = .32, HT = 2.2;
+  const pos = new THREE.Vector3(0, 0, 1.5), vel = new THREE.Vector3(), RAD = BODY_RAD, HT = BODY_HT;
   let active = false, grounded = false, ground = null, checkpoint = boxes[0], facing = Math.PI, coyote = 0, jumpHeld = false, simT = 0;
   let pipe = null, won = false, roll1 = false, throw2 = false, throwTo = null, aiming = null, camInit = false;
   const track = aimTracker();
@@ -1545,7 +1577,6 @@ function buildClimb() {
     land: at => { pos.set(at.x, at.y, at.z); vel.set(0, 0, 0); Rr.root.position.copy(pos); for (const b of boxes) if (!b.ax && overlap(b, at.x, at.z, 0) && Math.abs(b.top - at.y) < .1) checkpoint = b; },
     respawn: () => { staticBurst(300); return new THREE.Vector3(checkpoint.x, checkpoint.top, checkpoint.z); },
   });
-  const overlap = (b, px, pz, r) => Math.abs(px - b.x) < b.w / 2 + r && Math.abs(pz - b.z) < b.d / 2 + r;
 
   const popups = [];
   function toast(title, line, at, life = 6) {
@@ -1578,7 +1609,6 @@ function buildClimb() {
     }
     for (const f of floaters) { f.rotation.x += f.userData.w * dt; f.rotation.y += f.userData.w * dt * .7; }
     for (const m of mems) if (!m.got) { m.m.rotation.y = t * 1.4; m.m.rotation.x = t * .6; m.g.position.y = m.home.y + Math.sin(t * 2 + m.home.z) * .15; }
-    rim.material.emissive = rim.material.emissive || new THREE.Color();
 
     if (pipe) { runPipe(dt); placePopups(); return; }
     if (travel.active()) {
@@ -1613,30 +1643,9 @@ function buildClimb() {
     if (want.lengthSq()) { want.normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw); facing = Math.atan2(want.x, want.z); }
     const aimAt = aiming && track.mouse ? pickFor(aiming, AIM) : null;
     if (aimAt && !want.lengthSq()) facing = Math.atan2(aimAt.x - pos.x, aimAt.z - pos.z);
-    const accel = grounded ? 40 : 14, speed = 6.2;
-    vel.x += (want.x * speed - vel.x) * Math.min(1, accel * dt / speed);
-    vel.z += (want.z * speed - vel.z) * Math.min(1, accel * dt / speed);
-    coyote = grounded ? .12 : coyote - dt;
-    if (keys.j && !jumpHeld && coyote > 0) { vel.y = 9.2; coyote = 0; grounded = false; }
-    jumpHeld = !!keys.j;
-    if (!keys.j && vel.y > 3) vel.y -= 40 * dt;
-    vel.y -= 24 * dt;
-    for (const axis of ['x', 'z']) {
-      pos[axis] += vel[axis] * dt;
-      for (const b of cols) {
-        const bottom = b.top - b.h;
-        if (pos.y + HT <= bottom || pos.y >= b.top - .3) continue;
-        if (!overlap(b, pos.x, pos.z, RAD)) continue;
-        const c = axis === 'x' ? b.x : b.z, half = (axis === 'x' ? b.w : b.d) / 2 + RAD;
-        pos[axis] = pos[axis] < c ? c - half : c + half; vel[axis] = 0;
-      }
-    }
-    const prevY = pos.y; pos.y += vel.y * dt; grounded = false; ground = null;
-    for (const b of cols) {
-      if (b.pillar || !overlap(b, pos.x, pos.z, RAD * .5)) continue;
-      if (vel.y <= 0 && prevY >= b.top - .05 && pos.y <= b.top) { pos.y = b.top; vel.y = 0; grounded = true; ground = b; if (!b.ax && boxes.includes(b)) checkpoint = b; }
-      else if (vel.y > 0 && prevY + HT <= b.top - b.h && pos.y + HT > b.top - b.h) { pos.y = b.top - b.h - HT; vel.y = 0; }
-    }
+    const st = { pos, vel, grounded, ground, coyote, jumpHeld };
+    stepKinematic(st, dt, want, keys.j, cols, { skip: b => b.pillar, land: b => { if (!b.ax && boxes.includes(b)) checkpoint = b; } });
+    ({ grounded, ground, coyote, jumpHeld } = st);
     if (pos.y < -30) { staticBurst(300); pos.set(checkpoint.x, checkpoint.top + .01, checkpoint.z); vel.set(0, 0, 0); }
 
     Rr.root.position.copy(pos);
@@ -1668,7 +1677,7 @@ function buildClimb() {
     vel.set(0, 0, 0); scene.attach(Rr.head); aiming = null; travel.unaim(); for (const k in keys) keys[k] = false; chime(660);
   }
   function runPipe(dt) {
-    pipe.t += dt; const T = pipe.t, H = Rr.head, e = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u);
+    pipe.t += dt; const T = pipe.t, H = Rr.head, e = smooth;
     const IN = .35, RIDE = 3.8, OUT = IN + RIDE, END = OUT + 1.5;
     if (T < IN) H.position.lerpVectors(pipe.from, curve.getPoint(0), e(T / IN));
     else if (T < OUT) { H.position.copy(curve.getPoint(e((T - IN) / RIDE))); H.rotation.x -= dt * 14; }
@@ -1825,7 +1834,7 @@ function buildPuzzle(L) {
   const fill = new THREE.DirectionalLight(0x6a58ff, .6); fill.position.set(-30, 6, -10); scene.add(fill);
   const sun = new THREE.DirectionalLight(0xfff8ff, 1.25); sun.position.set(20, 40, 10); sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 140 }); scene.add(sun, sun.target);
-  const V = (x, y, z) => new THREE.Vector3(x, y, z), SLAB = .5, RAD = .32, HT = 2.2, cols = [], islands = [];
+  const V = (x, y, z) => new THREE.Vector3(x, y, z), SLAB = .5, RAD = BODY_RAD, HT = BODY_HT, cols = [], islands = [];
   const rnd = (a, b) => a + Math.random() * (b - a);
   for (const [x, z, top, w, d] of L.islands) {
     const g = platform(w, d, SLAB, 70, false); g.position.set(x, top, z); scene.add(g);
@@ -1889,7 +1898,7 @@ function buildPuzzle(L) {
     exit = { ...L.exit, y, g, frame3, veil };
   }
   const keys = KEYS, yaw = L.yaw ?? 0, pitch = L.pitch ?? .8;
-  let bodies = [], abilities = new Set(), simT = 0, active = false, done = 0, checkpoint = null, camInit = false, sel = [], carry = null, drag = null, mouse = null, hoverPad = null, ghost = null, solved = 0;
+  let bodies = [], abilities = new Set(), simT = 0, active = false, done = 0, checkpoint = null, camInit = false, sel = [], carry = null, drag = null, mouse = null, hoverPad = null, ghost = null;
   const camLook = V(0, 0, 0);
   const fitDist = (() => {
     if (!L.focus) return 13; const [x0, x1, z0, z1] = L.focus, c = V((x0 + x1) / 2, 0, (z0 + z1) / 2), dir = V(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
@@ -1899,8 +1908,8 @@ function buildPuzzle(L) {
     }
     return 45;
   })();
-  const solids = () => cols.filter(c => !c.pillar && (!c.gate || c.gate.open));
-  const overlap = (b, px, pz, r) => Math.abs(px - b.x) < b.w / 2 + r && Math.abs(pz - b.z) < b.d / 2 + r;
+  let solidList = null;
+  const solids = () => solidList || (solidList = cols.filter(c => !c.pillar && (!c.gate || c.gate.open)));
   const surfaceAt = (x, z, yTop) => { let best = null; for (const b of solids()) if (overlap(b, x, z, 0) && b.top <= yTop + .01 && (best === null || b.top > best)) best = b.top; return best; };
   const pickIsland = p => {
     const ray = aimRay(cam, p); let best = null, bk = Infinity;
@@ -1937,7 +1946,7 @@ function buildPuzzle(L) {
     });
     bodies.push(b); return b;
   }
-  function removeBody(b) { b.travel.unaim(); if (b.R.head.parent !== b.R.root) b.R.head.parent.remove(b.R.head); scene.remove(b.R.root); bodies = bodies.filter(o => o !== b); sel = sel.filter(o => o !== b); if (carry && carry.src === b) cancelCarry(); }
+  function removeBody(b) { b.travel.dispose(); if (b.R.head.parent !== b.R.root) b.R.head.parent.remove(b.R.head); scene.remove(b.R.root); bodies = bodies.filter(o => o !== b); sel = sel.filter(o => o !== b); if (carry && carry.src === b) cancelCarry(); }
   const pop = $('#ptoasts'), popups = [];
   function toast(title, line, at, life = 6) {
     const t = document.createElement('div'); t.className = 'toast';
@@ -1959,21 +1968,14 @@ function buildPuzzle(L) {
   const hud = $('#lvHud');
   const syncHud = () => { hud.textContent = L.name + (abilities.size ? '  ·  ' + [...abilities].join(' + ') : ''); };
   const mq = $('#pmq'), ctx = $('#pctx'), ov = $('#puzzleOv');
-  const rect = (x0, y0, x1, y1) => { mq.style.display = 'block'; mq.style.left = Math.min(x0, x1) + 'px'; mq.style.top = Math.min(y0, y1) + 'px'; mq.style.width = Math.abs(x1 - x0) + 'px'; mq.style.height = Math.abs(y1 - y0) + 'px'; };
-  const hideRect = () => { mq.style.display = 'none'; };
-  const px = e => { const r = frame.getBoundingClientRect(); return { x: (e.clientX - r.left) * frame.clientWidth / r.width, y: (e.clientY - r.top) * frame.clientHeight / r.height }; };
-  const centre = b => { const a = toFrame(V(b.pos.x, b.pos.y + 2.15, b.pos.z), cam), c = toFrame(b.pos, cam); return { x: (a.x + c.x) / 2, y: (a.y + c.y) / 2 }; };
-  const bounds = bs => {
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (const b of bs) for (const dx of [-.45, .45]) for (const dz of [-.35, .35]) for (const y of [-.06, 2.2]) { const f = toFrame(V(b.pos.x + dx, b.pos.y + y, b.pos.z + dz), cam); x0 = Math.min(x0, f.x); y0 = Math.min(y0, f.y); x1 = Math.max(x1, f.x); y1 = Math.max(y1, f.y); }
-    return x0 < Infinity ? { x0, y0, x1, y1 } : null;
-  };
+  const { rect, hide: hideRect } = marquee(mq);
+  const centre = b => screenCentre(b.pos, cam);
+  const bounds = bs => screenBounds(bs, b => b.pos, cam);
   function clearSel() { sel = []; ctx.classList.remove('on'); hideRect(); }
   function cancelCarry() { if (!carry) return; if (carry.kind === 'cut' && carry.src) carry.src.R.root.visible = true; carry = null; if (ghost) ghost.root.visible = false; hoverPad = null; }
   function openMenu() {
     ctx.querySelectorAll('button').forEach(b => { const a = b.dataset.a; b.disabled = a === 'copy' ? !abilities.has('copy') : a === 'cut' ? !abilities.has('cut') : false; });
-    ctx.classList.add('on'); const r = bounds(sel), w = ctx.offsetWidth, h = ctx.offsetHeight;
-    ctx.style.left = (r.x1 + 10 + w <= frame.clientWidth - 8 ? r.x1 + 10 : Math.max(8, r.x0 - 10 - w)) + 'px'; ctx.style.top = Math.max(8, Math.min(frame.clientHeight - h - 8, r.y0)) + 'px';
+    ctx.classList.add('on'); placeBeside(ctx, bounds(sel));
   }
   const say = (title, line) => { popups.filter(q => !q.at).forEach(q => { q.until = Math.min(q.until, simT + .4); }); toast(title, line, null, 4.5); };
   function begin(kind) {
@@ -2005,14 +2007,14 @@ function buildPuzzle(L) {
   }
   ov.addEventListener('pointerdown', e => {
     if (!active || done || e.target.closest('button, .ctx, .toast')) return;
-    const p = px(e); mouse = p;
+    const p = framePx(e); mouse = p;
     if (carry) { paste(p); return; }
     clearSel(); drag = { x0: p.x, y0: p.y }; try { ov.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault();
   });
-  ov.addEventListener('pointermove', e => { mouse = px(e); if (drag) rect(drag.x0, drag.y0, mouse.x, mouse.y); });
+  ov.addEventListener('pointermove', e => { if (!active) return; mouse = framePx(e); if (drag) rect(drag.x0, drag.y0, mouse.x, mouse.y); });
   ov.addEventListener('pointerup', e => {
     if (!drag) return;
-    const p = px(e), r = { x0: Math.min(drag.x0, p.x), y0: Math.min(drag.y0, p.y), x1: Math.max(drag.x0, p.x), y1: Math.max(drag.y0, p.y) }; drag = null;
+    const p = framePx(e), r = { x0: Math.min(drag.x0, p.x), y0: Math.min(drag.y0, p.y), x1: Math.max(drag.x0, p.x), y1: Math.max(drag.y0, p.y) }; drag = null;
     if (r.x1 - r.x0 < 8 || r.y1 - r.y0 < 8) { hideRect(); return; }
     sel = bodies.filter(b => { const c = centre(b); return !b.dying && !(carry && carry.kind === 'cut' && carry.src === b) && c.x > r.x0 && c.x < r.x1 && c.y > r.y0 && c.y < r.y1; });
     if (!sel.length) { hideRect(); return; }
@@ -2037,30 +2039,7 @@ function buildPuzzle(L) {
     if (b.flick && simT < b.flick) b.R.root.visible = Math.floor(simT * 20) % 2 === 0 && !(carry && carry.kind === 'cut' && carry.src === b);
     else if (b.flick) { b.flick = 0; b.R.root.visible = !(carry && carry.kind === 'cut' && carry.src === b); if (b.dying) { removeBody(b); return; } }
     if (carry && carry.kind === 'cut' && carry.src === b) return;
-    const accel = b.grounded ? 40 : 14, speed = 6.2;
-    b.vel.x += (want.x * speed - b.vel.x) * Math.min(1, accel * dt / speed);
-    b.vel.z += (want.z * speed - b.vel.z) * Math.min(1, accel * dt / speed);
-    b.coyote = b.grounded ? .12 : b.coyote - dt;
-    if (keys.j && !b.jumpHeld && b.coyote > 0) { b.vel.y = 9.2; b.coyote = 0; b.grounded = false; }
-    b.jumpHeld = !!keys.j;
-    if (!keys.j && b.vel.y > 3) b.vel.y -= 40 * dt;
-    b.vel.y -= 24 * dt;
-    const S = solids(), p = b.pos;
-    for (const axis of ['x', 'z']) {
-      p[axis] += b.vel[axis] * dt;
-      for (const c of S) {
-        if (p.y + HT <= c.top - c.h || p.y >= c.top - .3) continue;
-        if (!overlap(c, p.x, p.z, RAD)) continue;
-        const cc = axis === 'x' ? c.x : c.z, half = (axis === 'x' ? c.w : c.d) / 2 + RAD;
-        p[axis] = p[axis] < cc ? cc - half - 1e-4 : cc + half + 1e-4; b.vel[axis] = 0;
-      }
-    }
-    const prevY = p.y; p.y += b.vel.y * dt; b.grounded = false; b.ground = null;
-    for (const c of S) {
-      if (!overlap(c, p.x, p.z, RAD * .5)) continue;
-      if (b.vel.y <= 0 && prevY >= c.top - .05 && p.y <= c.top) { p.y = c.top; b.vel.y = 0; b.grounded = true; b.ground = c; }
-      else if (b.vel.y > 0 && prevY + HT <= c.top - c.h && p.y + HT > c.top - c.h) { p.y = c.top - c.h - HT; b.vel.y = 0; }
-    }
+    const S = solids(); stepKinematic(b, dt, want, keys.j, S, { eps: 1e-4 });
     if (want.lengthSq()) b.facing = Math.atan2(want.x, want.z);
     let dr = b.facing - b.R.root.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); b.R.root.rotation.y += dr * Math.min(1, dt * 12);
     animateRunner(b.R, dt, Math.hypot(b.vel.x, b.vel.z), b.grounded, t + (b.seed || 0));
@@ -2077,10 +2056,10 @@ function buildPuzzle(L) {
   }
   function reset() {
     for (const b of [...bodies]) removeBody(b);
-    bodies = []; abilities = new Set(L.has || []); done = 0; solved = 0; camInit = false; carry = null; sel = []; drag = null; hideRect(); ctx.classList.remove('on');
+    bodies = []; abilities = new Set(L.has || []); done = 0; camInit = false; carry = null; sel = []; drag = null; hideRect(); ctx.classList.remove('on');
     if (ghost) ghost.root.visible = false;
     popups.splice(0).forEach(pp => pp.el.remove());
-    plates.forEach(p => { p.on = false; }); gates.forEach(g => { g.open = false; g.k = 0; g.meshes.forEach(m => { m.visible = false; }); });
+    plates.forEach(p => { p.on = false; }); gates.forEach(g => { g.open = false; g.k = 0; g.meshes.forEach(m => { m.visible = false; }); }); solidList = null;
     if (crystal) { crystal.got = false; crystal.g.visible = true; }
     const [sx, sz] = L.start, sy = topAt(sx, sz); checkpoint = V(sx, sy, sz);
     addBody(sx, sy, sz, Math.PI).flick = 0;
@@ -2117,15 +2096,15 @@ function buildPuzzle(L) {
     }
     for (const g of gates) {
       const all = plates.filter(p => p.group === g.group), on = all.length && all.every(p => p.on);
-      if (g.latch) { if (on && !g.open) { g.open = true; chime(988); say('gate.sys', 'Unlocked. The bridge stays.'); } }
-      else if (on !== g.open) { g.open = on; if (on) chime(880); }
+      if (g.latch) { if (on && !g.open) { g.open = true; solidList = null; chime(988); say('gate.sys', 'Unlocked. The bridge stays.'); } }
+      else if (on !== g.open) { g.open = on; solidList = null; if (on) chime(880); }
     }
     if (crystal && !crystal.got && bodies.some(b => crystal.g.position.distanceTo(b.pos.clone().add(V(0, 1.3, 0))) < 1.6)) {
       crystal.got = true; crystal.g.visible = false; abilities.add(crystal.kind); syncHud(); chime(980);
       toast(crystal.kind + '.crystal', crystal.kind === 'copy' ? 'Copy acquired. Drag a box around yourself, choose Copy (Ctrl+C), then click a turquoise square.' : 'Cut acquired. Drag a box around yourself, choose Cut (Ctrl+X), then click an orange ring to move there.', null, 10);
     }
     if (exit && !done && bodies.some(b => b.grounded && b.R.root.visible && Math.hypot(b.pos.x - exit.x, b.pos.z - exit.z) < 1.1 && Math.abs(b.pos.y - exit.y) < .1)) {
-      done = t; solved = 1; chime(523); setTimeout(() => chime(784), 250); toast('exit.lnk', 'Level clear.', V(exit.x, exit.y + 3, exit.z), 3);
+      done = t; chime(523); setTimeout(() => chime(784), 250); toast('exit.lnk', 'Level clear.', V(exit.x, exit.y + 3, exit.z), 3);
       setTimeout(() => { if (active) goNext(L.next); }, 1600);
     }
     if (carry) {

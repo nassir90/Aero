@@ -5,12 +5,13 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public")
 with socket.socket() as _s:
     _s.bind(("127.0.0.1", 0)); PORT = _s.getsockname()[1]
 srv = subprocess.Popen([sys.executable, "-m", "http.server", str(PORT), "-b", "127.0.0.1", "-d", ROOT], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-time.sleep(.8)
+for _ in range(100):
+    try: socket.create_connection(("127.0.0.1", PORT), .1).close(); break
+    except OSError: time.sleep(.05)
 results = []
 
-def run(pw, name, fn):
-    b = pw.chromium.launch(channel="chrome", headless=True, args=["--use-angle=metal", "--enable-gpu", "--ignore-gpu-blocklist"])
-    pg = b.new_page(viewport={"width": 1280, "height": 900}); errs = []
+def run(browser, name, fn):
+    b = browser.new_context(viewport={"width": 1280, "height": 900}); pg = b.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.goto(f"http://127.0.0.1:{PORT}/games/aero/index.html", wait_until="networkidle")
     pg.wait_for_function("typeof window.__aeroJump === 'function'")
@@ -25,8 +26,16 @@ def run(pw, name, fn):
 class Game:
     def __init__(s, pg, level):
         s.pg = pg; pg.evaluate(f"__aeroJump(__aeroSceneAt('{level}'))"); s.step(.6)
+        s.level = s.pg.evaluate("__aeroActive().debug ? __aeroActive().debug().level : null")
+    def scene_after(s, *names):
+        try: s.pg.wait_for_function("names => names.includes(document.getElementById('sceneName').textContent)", arg=list(names), timeout=8000)
+        except Exception: pass
+        return s.pg.evaluate("document.getElementById('sceneName').textContent")
     def step(s, sec): s.pg.evaluate(f"__aeroStep({sec})")
-    def dbg(s): return s.pg.evaluate("__aeroActive().debug()")
+    def dbg(s):
+        d = s.pg.evaluate("__aeroActive().debug ? __aeroActive().debug() : {}")
+        if s.level and d.get("level") != s.level: d["done"] = True
+        return d
     def client(s, p):
         k = s.pg.evaluate("(() => { const f = document.getElementById('frame'), r = f.getBoundingClientRect(); return [r.left, r.top, r.width / f.clientWidth]; })()")
         return k[0] + p["x"] * k[2], k[1] + p["y"] * k[2]
@@ -159,14 +168,13 @@ def chain_climb(g):
     a = g.client(g.pg.evaluate("(() => { const A = __aero, L = A.boxes[12], M = A.mouth, S = __aeroActive(), v = new THREE.Vector3(M.x, L.top + .4, M.z - .4).project(S.cam), f = document.getElementById('frame'); return { x: (v.x * .5 + .5) * f.clientWidth, y: (-v.y * .5 + .5) * f.clientHeight }; })()"))
     g.pg.mouse.move(a[0] - 30, a[1] - 30); g.step(.1); g.pg.mouse.move(*a, steps=5); g.step(.2); g.pg.keyboard.up("Digit1")
     for _ in range(20): g.step(.5)
-    g.pg.wait_for_timeout(3500)
-    name = g.pg.evaluate("document.getElementById('sceneName').textContent")
+    name = g.scene_after("Copy crystal")
     return name == "Copy crystal", f"after the pipe the scene is {name!r} (expected 'Copy crystal')"
 
 def chain_end(g):
     ok, note = lvhead(g)
     if not ok: return False, note
-    g.pg.wait_for_timeout(4000); name = g.pg.evaluate("document.getElementById('sceneName').textContent")
+    name = g.scene_after("Relay")
     return name == "Relay", f"after Heads up the scene is {name!r} (expected 'Relay')"
 
 def shot(g, name):
@@ -317,7 +325,7 @@ def final(g):
 def chain_final(g):
     ok, note = final(g)
     if not ok: return False, note
-    g.pg.wait_for_timeout(4000); name = g.pg.evaluate("document.getElementById('sceneName').textContent")
+    name = g.scene_after("Lights on", "Halcyon")
     return name in ("Lights on", "Halcyon"), f"after All together the scene is {name!r} (expected the finale)"
 
 def lvhead_walls(g):
@@ -331,8 +339,10 @@ TESTS = [("title", "every_scene"), ("lvcopy", "lvcopy"), ("lvcopy", "lvcopy_with
 only = sys.argv[1:]
 try:
   with sync_playwright() as pw:
+    browser = pw.chromium.launch(channel="chrome", headless=True, args=["--use-angle=metal", "--enable-gpu", "--ignore-gpu-blocklist"])
     for name, fn in [(n, globals()[f]) for n, f in TESTS if not only or f in only]:
-        run(pw, name, lambda g, fn=fn: fn(g))
+        run(browser, name, lambda g, fn=fn: fn(g))
+    browser.close()
 finally:
   srv.terminate()
 print(json.dumps({"passed": sum(1 for r in results if r[1]), "of": len(results)}))

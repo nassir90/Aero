@@ -44,9 +44,9 @@ The bar under the game steps through each scene. You can also jump straight to o
 ## Layout
 
 - `public/games/aero/` is the game. Run `python3 -m http.server` in `public/` and open `/games/aero/`.
-- `studio/` renders the promo and dev-log videos frame by frame from the running game. `videos/capsrv.py` receives the frames and `videos/mux.sh` adds the voiceover and music.
-- The game also renders natively at other shapes: add `?shape=9x16` or `?shape=1x1` to the URL, and `&capture` to hide the controls. `studio/promo.js` scripts the vertical promos and the square site clips, `studio/capture.mjs` steps the game in headless Chrome and saves every frame (`node studio/capture.mjs v1_whole 9x16 out/`), and `studio/mux_promo.py` adds the voiceover lines and music.
-- `studio/dev.html` composes the dev-log videos: two copies of the game side by side (an old build next to the current one), code panels and diagrams on one canvas. `studio/devcap.mjs` renders it frame by frame, and `studio/sitecap.mjs` records the site itself scrolling at phone size.
+- `promo/` makes the videos. `promo/takes.mjs` lists the takes that TapaTab (`~/projects/TapaTab`) records frame by frame from the running game, `promo/rigs.js` drives each scene, and ShadowKit (`~/projects/ShadowKit`) builds each video in `promo/videos/` from its edit list, script and voiceover (`python3 ~/projects/ShadowKit/make.py <id>`, run from `promo/`).
+- The game also renders natively at other shapes: add `?shape=9x16` or `?shape=1x1` to the URL, and `&capture` to hide the controls. `studio/promo.js` and `studio/shadow/clips.js` hold the older scripted shots that `promo/takes.mjs` still reuses, and `studio/capture.mjs` renders the square site clips (`node studio/capture.mjs sq_sea 1x1 out/`).
+- `tests/puzzles.py` plays every puzzle level with real keyboard and mouse input in headless Chrome (`python3 tests/puzzles.py`, or name tests to run only those).
 - The page opens on the square clips (`public/games/aero/media/`) and scrolls down through the sky to the game, which sits on the clouds at the bottom. The sky image fades in through a gradient mask over a blue sampled from its top edge, so there is no seam.
 - `docs/` holds the screenshots above.
 - `cloudflare.config.ts` and `src/index.ts` define the Cloudflare Worker that serves `public/`. Run `npm install`, then `npx cf deploy`.
