@@ -42,7 +42,8 @@ body { margin: 0; background: var(--ground); color: var(--ink); font-family: var
 .word { position: absolute; right: 4%; bottom: 4%; font: 400 2.6em var(--sans); color: #6f6d78; letter-spacing: .01em; }
 #begin { position: absolute; left: 4%; bottom: 5%; font: 700 1em var(--pixel); color: #1c1b22; background: #ecebf2; border: 0; padding: .6em 1.4em; cursor: pointer; box-shadow: 0 0 0 2px #1c1b22, 0 0 0 4px #ecebf2; }
 .stage.story #begin { display: none; }
-#copyOv, #titleOv { cursor: crosshair; touch-action: none; }
+#copyOv, #titleOv, #puzzleOv { cursor: crosshair; touch-action: none; }
+.ctx button:disabled { opacity: .4; cursor: default; }
 .ctx.vista { position: absolute; display: none; z-index: 5; width: auto; left: 0; top: 0; padding: .25em; gap: .1em; }
 .ctx.vista.on { display: grid; }
 .ctx button { display: flex; align-items: center; gap: .45em; font: .74em var(--chrome); color: #16224a; text-align: left; white-space: nowrap; background: transparent; border: 1px solid transparent; border-radius: .25em; padding: .25em .6em .25em .4em; cursor: pointer; }
@@ -186,7 +187,7 @@ html:not(.capture) .bar p { color: #c4c8e6; }
   </article>
   <article class="clip flip">
     <video src="media/sq_climb.mp4" poster="media/sq_climb.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Throwing the head to the next platform"></video>
-    <div class="clip-text"><h3>The climb</h3><p>Hold 2 and point to throw your head to the next platform. Find four memories, then roll your head into the pipe to get home.</p></div>
+    <div class="clip-text"><h3>The climb</h3><p>Hold 2 and point to throw your head to the next platform. Find four memories, then roll your head into the pipe, which leads on to the puzzle levels.</p></div>
   </article>
   <footer class="more-foot"><a href="#stage" class="play-link">Play Aero ↓</a><p>mpts.ie/games/aero</p></footer>
 </section>
@@ -235,6 +236,13 @@ html:not(.capture) .bar p { color: #c4c8e6; }
       </div>
     </section>
 
+    <section class="ov" id="puzzleOv">
+      <div class="marquee" id="pmq"></div>
+      <div class="hud" id="lvHud"></div>
+      <div class="toasts" id="ptoasts"></div>
+      <div class="ctx vista" id="pctx"></div>
+    </section>
+
     <section class="ov" id="playOv">
       <div class="hud" id="count">memories 0/4</div>
       <div class="toasts" id="toasts"></div>
@@ -273,6 +281,7 @@ const $ = s => document.querySelector(s);
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const frame = $('#frame'), stage = $('#stage'), bar = $('#bar');
+$('#pctx').innerHTML = $('#ctx').innerHTML;
 const QS = new URLSearchParams(location.search), SHAPE = QS.get('shape'), CAPTURE = QS.has('capture');
 const [RW, RH] = SHAPE === '9x16' ? [288, 512] : SHAPE === '1x1' ? [384, 384] : [400, 300];
 const AR = RW / RH;
@@ -538,13 +547,13 @@ const fadeTex = (() => {
   x.fillStyle = g; x.fillRect(0, 0, 4, 128); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
 })();
 MAT.pillar = new THREE.MeshStandardMaterial({ map: fadeTex, transparent: true, roughness: .6, envMap: ENV, envMapIntensity: .35 });
-function platform(w, d, h, pillarDepth = 60) {
+function platform(w, d, h, pillarDepth = 60, deco = true) {
   const g = new THREE.Group();
   const slab = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [MAT.side, MAT.side, MAT.top, MAT.side, MAT.side, MAT.side]);
   slab.position.y = -h / 2; slab.castShadow = slab.receiveShadow = true; g.add(slab);
   const o = Math.min(w, d) * .78, i = Math.min(w, d) * .52;
-  const ring = new THREE.Mesh(rectRing(w - (Math.min(w, d) - o), d - (Math.min(w, d) - o), w - (Math.min(w, d) - i), d - (Math.min(w, d) - i), .05), ringMat());
-  ring.position.y = .002; ring.receiveShadow = true; g.add(ring);
+  if (deco) { const ring = new THREE.Mesh(rectRing(w - (Math.min(w, d) - o), d - (Math.min(w, d) - o), w - (Math.min(w, d) - i), d - (Math.min(w, d) - i), .05), ringMat());
+    ring.position.y = .002; ring.receiveShadow = true; g.add(ring); }
   if (pillarDepth) {
     const pw = w * .62, pd = d * .62;
     const p = new THREE.Mesh(new THREE.BoxGeometry(pw, pillarDepth, pd), MAT.pillar);
@@ -1667,7 +1676,7 @@ function buildClimb() {
     }
     const bodyScale = T < OUT ? pipe.body * (1 - e(T / .3)) : e((T - OUT) / 1.3);
     Rr.body.scale.setScalar(Math.max(.001, bodyScale));
-    if (T >= END && !won) { won = true; Rr.root.attach(H); H.position.set(0, 1.93, 0); H.rotation.set(0, 0, 0); chime(523); setTimeout(() => chime(784), 300); setTimeout(finale, 1600); }
+    if (T >= END && !won) { won = true; Rr.root.attach(H); H.position.set(0, 1.93, 0); H.rotation.set(0, 0, 0); chime(523); setTimeout(() => chime(784), 300); setTimeout(() => goNext('lvcopy'), 1600); }
     const look = T < OUT ? H.position.clone() : landing.clone().add(new THREE.Vector3(0, 1.2, 0));
     const off = T < OUT ? new THREE.Vector3(6, 3.5, 7) : new THREE.Vector3(Math.sin(T * .2) * 9, 5, Math.cos(T * .2) * 9);
     camLook.lerp(look, 1 - Math.exp(-dt * 8));
@@ -1691,7 +1700,378 @@ function buildClimb() {
   return { scene, cam, update, reset, enter() { active = true; }, leave() { active = false; for (const k in keys) keys[k] = false; } };
 }
 
-const PLAY_NOTE = 'WASD moves, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it. Drag to look. Find 4 memories, then roll your head into the pipe.';
+const TURQ = 0x2fe6d8, ORANGE = 0xff8a2a;
+const LEVELS = {
+  lvcopy: { name: 'Copy crystal', next: 'lvsync', start: [0, 2.5], maxCrew: 2, focus: [-4.5, 14.5, -15.5, 4.5], k: .75,
+    intro: ['island.sys', 'A crystal is floating ahead. The far island has no way across.'],
+    islands: [[0, 0, 0, 8, 8], [0, -13, 0, 4, 4], [12, 0, 0, 4, 6]],
+    walls: [[12, -3.2, 0, 4, .4, 3]],
+    pads: [{ type: 'copy', x: 12, z: 1.5 }],
+    plates: [{ x: 12, z: -2.3, group: 'a' }],
+    gates: [{ group: 'a', boxes: [[0, -7.5, 0, 2, 7]] }],
+    crystal: { kind: 'copy', x: 0, z: .3 }, exit: { x: 0, z: -13.6 } },
+  lvsync: { name: 'In sync', next: 'lvcut', start: [-3, 1], maxCrew: 2, has: ['copy'], focus: [-5, 5, -12, 2.5], k: .4,
+    intro: ['sync.sys', 'Both plates at once. Every copy moves when you move.'],
+    islands: [[-3, -1, 0, 2.6, 6], [-3, -11, 0, 2.6, 10], [3, -2.75, 0, 2.6, 9.5], [3, -10.35, 0, 2.6, 1.7], [-3, -19.5, 0, 3, 3]],
+    walls: [[3, -11.4, 0, 2.6, .4, 3]],
+    pads: [{ type: 'copy', x: 3, z: -1 }],
+    plates: [{ x: -3, z: -15, group: 'a' }, { x: 3, z: -10.35, group: 'a' }],
+    gates: [{ group: 'a', latch: true, boxes: [[-3, -17, 0, 2, 2]] }],
+    exit: { x: -3, z: -20 } },
+  lvcut: { name: 'Cut', next: 'lvboth', start: [0, 1.5], maxCrew: 1, focus: [-3.5, 3.5, -15, 3.5], k: .45,
+    intro: ['cut.sys', 'Another crystal. The islands ahead are out of reach.'],
+    islands: [[0, 0, 0, 6, 6], [0, -13, 0, 4, 4], [0, -18.5, 3.2, 4, 4]],
+    pads: [{ type: 'cut', x: 0, z: -12.5 }, { type: 'cut', x: 0, z: -17.2 }],
+    crystal: { kind: 'cut', x: 0, z: -1 }, exit: { x: 0, z: -19.6 } },
+  lvboth: { name: 'Copy and cut', next: 'lvhead', start: [0, 1.6], maxCrew: 3, has: ['copy', 'cut'], focus: [-12.5, 12.5, -13, 3.5], k: .75,
+    intro: ['gate.sys', 'Three plates, three of you. One island only takes copies, the other only takes cuts.'],
+    islands: [[0, 0, 0, 6, 6], [-10.5, -4, 0, 3, 3], [10.5, -4, 0, 3, 3], [0, -11, 0, 3, 3]],
+    walls: [[-10.5, -5.3, 0, 3, .4, 3], [10.5, -5.3, 0, 3, .4, 3]],
+    pads: [{ type: 'copy', x: -10.5, z: -4.4 }, { type: 'cut', x: 10.5, z: -4.4 }],
+    plates: [{ x: 0, z: -1.8, group: 'a' }, { x: -10.5, z: -4.6, group: 'a' }, { x: 10.5, z: -4.6, group: 'a' }],
+    gates: [{ group: 'a', latch: true, boxes: [[0, -6.25, 0, 2, 6.5]] }],
+    exit: { x: 0, z: -11.4 } },
+  lvhead: { name: 'Heads up', next: 'finale', start: [0, 1], maxCrew: 1, heads: true, dist: 14,
+    intro: ['head.sys', 'A wall too tall to jump, then a barrier you can only get under. Hold 2 to throw your head, 1 to roll it. Stand back from walls to clear them.'],
+    islands: [[0, 0, 0, 6, 5], [0, -6, 0, 4, 4], [0, -18, 0, 2.2, 20], [0, -30.5, 2.8, 4, 4]],
+    walls: [[0, -2.7, 0, 6, .4, 3.2]],
+    beams: [[0, -12, .55, 2.2, .5, 7.45]],
+    exit: { x: 0, z: -31.3 } },
+};
+function buildPuzzle(L) {
+  const scene = new THREE.Scene(); scene.environment = ENV; scene.fog = new THREE.Fog(0xf4f2ff, 34, 150);
+  scene.add(skyDome(0xa99bff, 0xf5f3ff, 0xffffff));
+  const cam = new THREE.PerspectiveCamera(FOV(52), RW / RH, .1, 500);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8f82e8, .5));
+  const fill = new THREE.DirectionalLight(0x6a58ff, .6); fill.position.set(-30, 6, -10); scene.add(fill);
+  const sun = new THREE.DirectionalLight(0xfff8ff, 1.25); sun.position.set(20, 40, 10); sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 140 }); scene.add(sun, sun.target);
+  const V = (x, y, z) => new THREE.Vector3(x, y, z), SLAB = .5, RAD = .32, HT = 2.2, cols = [], islands = [];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  for (const [x, z, top, w, d] of L.islands) {
+    const g = platform(w, d, SLAB, 70, false); g.position.set(x, top, z); scene.add(g);
+    const b = { g, x, z, top, w, d, h: SLAB }; cols.push(b, { pillar: true, x, z, w: w * .62, d: d * .62, top: top - SLAB, h: 70 }); islands.push(b);
+  }
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0xece9ff, roughness: .35, metalness: .1, envMap: ENV, envMapIntensity: .6 });
+  for (const [x, z, y0, w, d, h] of L.walls || []) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat); m.position.set(x, y0 + h / 2, z); m.castShadow = m.receiveShadow = true; scene.add(m);
+    cols.push({ x, z, top: y0 + h, w, d, h, solid: true });
+  }
+  for (const [x, z, y0, w, d, h] of L.beams || []) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w + .3, h, d), ringMat()); m.position.set(x, y0 + h / 2, z); m.castShadow = true; scene.add(m);
+    cols.push({ x, z, top: y0 + h, w, d, h, solid: true });
+  }
+  for (let i = 0; i < 16; i++) {
+    const a = rnd(Math.PI * .15, Math.PI * .85) + (i % 2 ? Math.PI : 0), r = rnd(40, 100), w = rnd(2, 7), d = rnd(2, 7), p = platform(w, d, rnd(.5, 3), 80, false);
+    p.position.set(Math.cos(a) * r, rnd(-30, 4), -12 + Math.sin(a) * r * .5 - (i % 2 ? 0 : 40)); p.rotation.y = rnd(0, 1.2); scene.add(p);
+  }
+  const floaters = [];
+  for (let i = 0; i < 10; i++) { const s = rnd(.5, 1.8), c = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), i % 3 ? MAT.float : MAT.glass); c.position.set(rnd(-40, 40), rnd(-30, -8), rnd(-60, 20)); c.userData.w = rnd(-.3, .3); scene.add(c); floaters.push(c); }
+  const topAt = (x, z) => { let best = null; for (const b of islands) if (Math.abs(x - b.x) <= b.w / 2 && Math.abs(z - b.z) <= b.d / 2 && (best === null || b.top > best)) best = b.top; return best ?? 0; };
+  const glow = c => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: .55, roughness: .2, metalness: .3, envMap: ENV });
+  const pads = (L.pads || []).map(p => {
+    const y = topAt(p.x, p.z), g = new THREE.Group(); g.position.set(p.x, y + .03, p.z); scene.add(g);
+    const col = p.type === 'copy' ? TURQ : ORANGE;
+    if (p.type === 'copy') { const m = new THREE.Mesh(rectRing(1.6, 1.6, 1.05, 1.05, .1), glow(col)); g.add(m); }
+    else { const m = new THREE.Mesh(new THREE.TorusGeometry(.66, .13, 10, 40), glow(col)); m.rotation.x = -Math.PI / 2; m.position.y = .08; g.add(m); }
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(.62, .62, 3.2, 24, 1, true), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .24, side: THREE.DoubleSide, depthWrite: false }));
+    beam.position.y = 1.6; beam.renderOrder = 3; g.add(beam);
+    return { ...p, y, g };
+  });
+  const plateMat = () => new THREE.MeshStandardMaterial({ color: 0x8f7dff, emissive: 0x7b6cff, emissiveIntensity: 0, roughness: .3, metalness: .2, envMap: ENV });
+  const plates = (L.plates || []).map(p => {
+    const y = topAt(p.x, p.z), m = new THREE.Mesh(new THREE.BoxGeometry(1.6, .12, 1.6), plateMat()); m.position.set(p.x, y + .04, p.z); m.receiveShadow = true; scene.add(m);
+    return { ...p, y, m, on: false };
+  });
+  const gates = (L.gates || []).map(G => {
+    const gate = { ...G, open: false, k: 0, meshes: [] };
+    for (const [x, z, top, w, d] of G.boxes) {
+      const mat = MAT.glass.clone(); mat.opacity = 0; const m = new THREE.Mesh(new THREE.BoxGeometry(w, SLAB, d), mat); m.position.set(x, top - SLAB / 2, z); m.renderOrder = 2; m.visible = false; scene.add(m);
+      const r = new THREE.Mesh(rectRing(w * .8, d * .8, w * .55, d * .55, .05), glow(0x9b8cff)); r.position.set(x, top + .004, z); r.visible = false; scene.add(r);
+      gate.meshes.push(m, r); cols.push({ x, z, top, w, d, h: SLAB, gate });
+    }
+    return gate;
+  });
+  let crystal = null;
+  if (L.crystal) {
+    const c = L.crystal, col = c.kind === 'copy' ? TURQ : ORANGE, g = new THREE.Group(), y = topAt(c.x, c.z);
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.42, 0), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: .7, metalness: .6, roughness: .1, envMap: ENV }));
+    gem.scale.y = 1.5; gem.castShadow = true; const halo = new THREE.Mesh(squareRing(1.3, 1.05, .04), glow(col)); halo.rotation.x = -Math.PI / 2; halo.position.y = -.9;
+    g.add(gem, halo); g.position.set(c.x, y + 1.9, c.z); scene.add(g); crystal = { ...c, g, gem, home: g.position.clone(), got: false };
+  }
+  let exit = null;
+  if (L.exit) {
+    const y = topAt(L.exit.x, L.exit.z), g = new THREE.Group(); g.position.set(L.exit.x, y, L.exit.z); scene.add(g);
+    const frame3 = new THREE.Mesh(squareRing(2.2, 1.7, .25), ringMat()); frame3.position.y = 1.25; g.add(frame3);
+    const veil = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.7), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .35, side: THREE.DoubleSide, depthWrite: false })); veil.position.y = 1.25; g.add(veil);
+    const base = new THREE.Mesh(rectRing(2.4, 1.2, 2.0, .8, .05), glow(0xffffff)); base.position.y = .01; g.add(base);
+    exit = { ...L.exit, y, g, frame3, veil };
+  }
+  const keys = KEYS, yaw = L.yaw ?? 0, pitch = L.pitch ?? .8;
+  let bodies = [], abilities = new Set(), simT = 0, active = false, done = 0, checkpoint = null, camInit = false, sel = [], carry = null, drag = null, mouse = null, hoverPad = null, ghost = null, solved = 0;
+  const camLook = V(0, 0, 0);
+  const fitDist = (() => {
+    if (!L.focus) return 13; const [x0, x1, z0, z1] = L.focus, c = V((x0 + x1) / 2, 0, (z0 + z1) / 2), dir = V(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+    for (let D = 8; D < 45; D += .5) {
+      cam.position.copy(c).addScaledVector(dir, D); cam.lookAt(c); cam.updateMatrixWorld(true);
+      if ([[x0, z0], [x1, z0], [x0, z1], [x1, z1]].every(([x, z]) => { const q = V(x, 0, z).project(cam); return Math.abs(q.x) < .9 && Math.abs(q.y) < .86; })) return D;
+    }
+    return 45;
+  })();
+  const solids = () => cols.filter(c => !c.pillar && (!c.gate || c.gate.open));
+  const overlap = (b, px, pz, r) => Math.abs(px - b.x) < b.w / 2 + r && Math.abs(pz - b.z) < b.d / 2 + r;
+  const surfaceAt = (x, z, yTop) => { let best = null; for (const b of solids()) if (overlap(b, x, z, 0) && b.top <= yTop + .01 && (best === null || b.top > best)) best = b.top; return best; };
+  const pickIsland = p => {
+    const ray = aimRay(cam, p); let best = null, bk = Infinity;
+    for (const b of islands) { if (Math.abs(ray.direction.y) < 1e-4) continue; const k = (b.top - ray.origin.y) / ray.direction.y; if (!(k > 0) || k >= bk) continue;
+      const q = ray.origin.clone().addScaledVector(ray.direction, k); if (Math.abs(q.x - b.x) <= b.w / 2 && Math.abs(q.z - b.z) <= b.d / 2) { bk = k; best = q; best.box = b; } }
+    return best;
+  };
+  function addBody(x, y, z, f = Math.PI) {
+    const R = makeRunner(); R.root.position.set(x, y, z); R.root.rotation.y = f; scene.add(R.root);
+    const b = { R, pos: R.root.position, vel: V(0, 0, 0), grounded: true, ground: null, coyote: 0, jumpHeld: false, facing: f, flick: simT + .45, aiming: null, prev1: false, prev2: false, track: aimTracker() };
+    b.travel = headTravel(R, {
+      ground: surfaceAt,
+      target: (from, dir, dest) => {
+        const clear = to => { const arc = 1.6 + from.distanceTo(to) * .22, q = V(0, 0, 0);
+          for (let i = 1; i < 40; i++) { const u = i / 40; q.lerpVectors(from, to, u); q.y += Math.sin(Math.PI * u) * arc;
+            for (const c of solids()) if (c.solid && q.y + .2 > c.top - c.h && q.y - .2 < c.top && overlap(c, q.x, q.z, .2)) return false; }
+          return true; };
+        if (dest) { const t = dest.box, d = Math.hypot(dest.x - from.x, dest.z - from.z), dy = t.top - (from.y - 1.93); if (d > 14 || dy > 5.5 || dy < -12) return null; const to = V(dest.x, t.top + .2, dest.z); return clear(to) ? to : null; }
+        let best = null, score = Infinity;
+        for (const t of islands) { if (t === b.ground) continue; const dx = t.x - from.x, dz = t.z - from.z, d = Math.hypot(dx, dz), dy = t.top - (from.y - 1.93);
+          if (d < 1.5 || d > 11 || dy > 4.5 || dy < -9) continue; const c = (dx * dir.x + dz * dir.z) / d; if (c < .72) continue; if (!clear(V(t.x, t.top + .2, t.z))) continue; const sc = d * (2.2 - c); if (sc < score) { score = sc; best = t; } }
+        return best ? V(best.x, best.top + .2, best.z) : null;
+      },
+      bounds: q => {
+        let hit = false;
+        for (const c of solids()) { if (!c.solid || q.y + .2 <= c.top - c.h || q.y - .2 >= c.top) continue; if (!overlap(c, q.x, q.z, .2)) continue;
+          const ox = c.w / 2 + .2 - Math.abs(q.x - c.x), oz = c.d / 2 + .2 - Math.abs(q.z - c.z);
+          if (ox < oz) q.x += Math.sign(q.x - c.x || 1) * ox; else q.z += Math.sign(q.z - c.z || 1) * oz; hit = true; }
+        return hit;
+      },
+      land: at => { b.pos.set(at.x, at.y, at.z); b.vel.set(0, 0, 0); },
+      respawn: () => V(checkpoint.x, checkpoint.y, checkpoint.z),
+    });
+    bodies.push(b); return b;
+  }
+  function removeBody(b) { b.travel.unaim(); if (b.R.head.parent !== b.R.root) b.R.head.parent.remove(b.R.head); scene.remove(b.R.root); bodies = bodies.filter(o => o !== b); sel = sel.filter(o => o !== b); if (carry && carry.src === b) cancelCarry(); }
+  const pop = $('#ptoasts'), popups = [];
+  function toast(title, line, at, life = 6) {
+    const t = document.createElement('div'); t.className = 'toast';
+    t.innerHTML = '<div class="vista"><div class="vbar"><span></span><i class="vbtn x" role="button" tabindex="0" aria-label="Close">✕</i></div><div class="msg"></div></div>';
+    t.querySelector('span').textContent = title; t.querySelector('.msg').textContent = line; pop.appendChild(t);
+    const pp = { el: t, at: at && at.clone(), until: simT + life }; popups.push(pp);
+    const close = e => { e.stopPropagation(); const i = popups.indexOf(pp); if (i >= 0) popups.splice(i, 1); t.remove(); };
+    const x = t.querySelector('.x'); x.addEventListener('pointerdown', e => e.stopPropagation()); x.addEventListener('click', close);
+  }
+  function placePopups() {
+    for (let i = popups.length - 1; i >= 0; i--) {
+      const pp = popups[i]; if (simT > pp.until) { pp.el.remove(); popups.splice(i, 1); continue; }
+      if (!pp.at) { const k = popups.filter(q => !q.at).indexOf(pp); pp.el.style.transform = `translate(12px, ${12 + k * (pp.el.offsetHeight + 8)}px)`; pp.el.style.opacity = pp.until - simT < .5 ? 0 : 1; continue; }
+      const f = toFrame(pp.at, cam), w = pp.el.offsetWidth, h = pp.el.offsetHeight;
+      const x = Math.min(frame.clientWidth - w - 8, Math.max(8, f.x - w / 2)), y = Math.min(frame.clientHeight - h - 8, Math.max(8, f.y - h - 14));
+      pp.el.style.transform = `translate(${x}px, ${y}px)`; pp.el.style.opacity = f.z > 1 || pp.until - simT < .5 ? 0 : 1;
+    }
+  }
+  const hud = $('#lvHud');
+  const syncHud = () => { hud.textContent = L.name + (abilities.size ? '  ·  ' + [...abilities].join(' + ') : ''); };
+  const mq = $('#pmq'), ctx = $('#pctx'), ov = $('#puzzleOv');
+  const rect = (x0, y0, x1, y1) => { mq.style.display = 'block'; mq.style.left = Math.min(x0, x1) + 'px'; mq.style.top = Math.min(y0, y1) + 'px'; mq.style.width = Math.abs(x1 - x0) + 'px'; mq.style.height = Math.abs(y1 - y0) + 'px'; };
+  const hideRect = () => { mq.style.display = 'none'; };
+  const px = e => { const r = frame.getBoundingClientRect(); return { x: (e.clientX - r.left) * frame.clientWidth / r.width, y: (e.clientY - r.top) * frame.clientHeight / r.height }; };
+  const centre = b => { const a = toFrame(V(b.pos.x, b.pos.y + 2.15, b.pos.z), cam), c = toFrame(b.pos, cam); return { x: (a.x + c.x) / 2, y: (a.y + c.y) / 2 }; };
+  const bounds = bs => {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const b of bs) for (const dx of [-.45, .45]) for (const dz of [-.35, .35]) for (const y of [-.06, 2.2]) { const f = toFrame(V(b.pos.x + dx, b.pos.y + y, b.pos.z + dz), cam); x0 = Math.min(x0, f.x); y0 = Math.min(y0, f.y); x1 = Math.max(x1, f.x); y1 = Math.max(y1, f.y); }
+    return x0 < Infinity ? { x0, y0, x1, y1 } : null;
+  };
+  function clearSel() { sel = []; ctx.classList.remove('on'); hideRect(); }
+  function cancelCarry() { if (!carry) return; if (carry.kind === 'cut' && carry.src) carry.src.R.root.visible = true; carry = null; if (ghost) ghost.root.visible = false; hoverPad = null; }
+  function openMenu() {
+    ctx.querySelectorAll('button').forEach(b => { const a = b.dataset.a; b.disabled = a === 'copy' ? !abilities.has('copy') : a === 'cut' ? !abilities.has('cut') : false; });
+    ctx.classList.add('on'); const r = bounds(sel), w = ctx.offsetWidth, h = ctx.offsetHeight;
+    ctx.style.left = (r.x1 + 10 + w <= frame.clientWidth - 8 ? r.x1 + 10 : Math.max(8, r.x0 - 10 - w)) + 'px'; ctx.style.top = Math.max(8, Math.min(frame.clientHeight - h - 8, r.y0)) + 'px';
+  }
+  const say = (title, line) => { popups.filter(q => !q.at).forEach(q => { q.until = Math.min(q.until, simT + .4); }); toast(title, line, null, 4.5); };
+  function begin(kind) {
+    if (!sel.length || carry) return; ctx.classList.remove('on');
+    if (kind === 'delete') { const keep = bodies.length - sel.length; if (keep < 1) { say('delete.sys', 'You need at least one of you.'); return; } sel.forEach(b => { b.flick = simT + .35; b.dying = true; }); clearSel(); chime(300); return; }
+    if (!abilities.has(kind)) { say(kind + '.sys', kind === 'copy' ? 'You need the copy crystal first.' : 'You need the cut crystal first.'); return; }
+    if (sel.length > 1) { say(kind + '.sys', 'Select just one of you.'); return; }
+    if (kind === 'copy' && bodies.length >= (L.maxCrew || 1)) { say('copy.sys', `At most ${L.maxCrew || 1} of you here. Delete a copy first.`); return; }
+    carry = { kind, src: sel[0] }; if (kind === 'cut') { sel[0].R.root.visible = false; sel[0].vel.set(0, 0, 0); }
+    if (!ghost) { ghost = makeGhost(); scene.add(ghost.root); } ghost.src = carry.src.R; ghost.root.visible = false;
+    hideRect(); sel = []; chime(kind === 'copy' ? 660 : 520);
+    say(kind + '.sys', kind === 'copy' ? 'Click a turquoise square to paste the copy.' : 'Click an orange ring to paste yourself there.');
+  }
+  const padUnder = p => {
+    if (!p || !carry) return null; const want = carry.kind === 'copy' ? 'copy' : 'cut', ray = aimRay(cam, p); let best = null, bd = Infinity;
+    for (const pd of pads) { if (pd.type !== want) continue; const k = (pd.y - ray.origin.y) / ray.direction.y; if (!(k > 0)) continue;
+      const q = ray.origin.clone().addScaledVector(ray.direction, k), d = Math.hypot(q.x - pd.x, q.z - pd.z); if (d < 1.1 && d < bd) { bd = d; best = pd; } }
+    return best;
+  };
+  const padFree = pd => !bodies.some(b => b !== (carry && carry.kind === 'cut' ? carry.src : null) && Math.hypot(b.pos.x - pd.x, b.pos.z - pd.z) < .9 && Math.abs(b.pos.y - pd.y) < 1);
+  function paste(p) {
+    const pd = padUnder(p);
+    if (!pd) { say(carry.kind + '.sys', carry.kind === 'copy' ? 'Copies only go on turquoise squares.' : 'Cuts only go on orange rings.'); return; }
+    if (!padFree(pd)) { say(carry.kind + '.sys', 'Someone is already standing there.'); return; }
+    const src = carry.src;
+    if (carry.kind === 'copy') { const b = addBody(pd.x, pd.y, pd.z, src.R.root.rotation.y); b.seed = Math.random(); }
+    else { src.pos.set(pd.x, pd.y, pd.z); src.vel.set(0, 0, 0); src.R.root.visible = true; src.flick = simT + .3; src.grounded = true; }
+    carry = null; ghost.root.visible = false; hoverPad = null; chime(784); popups.filter(q => !q.at).forEach(q => { q.until = Math.min(q.until, simT + .3); });
+  }
+  ov.addEventListener('pointerdown', e => {
+    if (!active || done || e.target.closest('button, .ctx, .toast')) return;
+    const p = px(e); mouse = p;
+    if (carry) { paste(p); return; }
+    clearSel(); drag = { x0: p.x, y0: p.y }; try { ov.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault();
+  });
+  ov.addEventListener('pointermove', e => { mouse = px(e); if (drag) rect(drag.x0, drag.y0, mouse.x, mouse.y); });
+  ov.addEventListener('pointerup', e => {
+    if (!drag) return;
+    const p = px(e), r = { x0: Math.min(drag.x0, p.x), y0: Math.min(drag.y0, p.y), x1: Math.max(drag.x0, p.x), y1: Math.max(drag.y0, p.y) }; drag = null;
+    if (r.x1 - r.x0 < 8 || r.y1 - r.y0 < 8) { hideRect(); return; }
+    sel = bodies.filter(b => { const c = centre(b); return !b.dying && !(carry && carry.kind === 'cut' && carry.src === b) && c.x > r.x0 && c.x < r.x1 && c.y > r.y0 && c.y < r.y1; });
+    if (!sel.length) { hideRect(); return; }
+    openMenu();
+  });
+  ctx.addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled) begin(b.dataset.a); });
+  addEventListener('keydown', e => {
+    if (!active) return;
+    if ((e.metaKey || e.ctrlKey) && (e.code === 'KeyC' || e.code === 'KeyX') && sel.length && !carry) { begin(e.code === 'KeyC' ? 'copy' : 'cut'); e.preventDefault(); }
+    else if ((e.code === 'Delete' || e.code === 'Backspace') && sel.length && !carry) { begin('delete'); e.preventDefault(); }
+    else if (e.code === 'Escape' && (sel.length || carry || drag)) { drag = null; cancelCarry(); clearSel(); e.preventDefault(); }
+  });
+
+  const followCam = (dt, want) => {
+    if (!camInit) { camLook.copy(want); camInit = true; }
+    camLook.lerp(want, 1 - Math.exp(-dt * 6));
+    const dist = L.dist || fitDist, off = V(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).multiplyScalar(dist);
+    cam.position.copy(camLook).add(off); cam.lookAt(camLook);
+    sun.position.set(camLook.x + 20, camLook.y + 40, camLook.z + 10); sun.target.position.copy(camLook);
+  };
+  function stepBody(b, dt, want, t) {
+    if (b.flick && simT < b.flick) b.R.root.visible = Math.floor(simT * 20) % 2 === 0 && !(carry && carry.kind === 'cut' && carry.src === b);
+    else if (b.flick) { b.flick = 0; b.R.root.visible = !(carry && carry.kind === 'cut' && carry.src === b); if (b.dying) { removeBody(b); return; } }
+    if (carry && carry.kind === 'cut' && carry.src === b) return;
+    const accel = b.grounded ? 40 : 14, speed = 6.2;
+    b.vel.x += (want.x * speed - b.vel.x) * Math.min(1, accel * dt / speed);
+    b.vel.z += (want.z * speed - b.vel.z) * Math.min(1, accel * dt / speed);
+    b.coyote = b.grounded ? .12 : b.coyote - dt;
+    if (keys.j && !b.jumpHeld && b.coyote > 0) { b.vel.y = 9.2; b.coyote = 0; b.grounded = false; }
+    b.jumpHeld = !!keys.j;
+    if (!keys.j && b.vel.y > 3) b.vel.y -= 40 * dt;
+    b.vel.y -= 24 * dt;
+    const S = solids(), p = b.pos;
+    for (const axis of ['x', 'z']) {
+      p[axis] += b.vel[axis] * dt;
+      for (const c of S) {
+        if (p.y + HT <= c.top - c.h || p.y >= c.top - .3) continue;
+        if (!overlap(c, p.x, p.z, RAD)) continue;
+        const cc = axis === 'x' ? c.x : c.z, half = (axis === 'x' ? c.w : c.d) / 2 + RAD;
+        p[axis] = p[axis] < cc ? cc - half - 1e-4 : cc + half + 1e-4; b.vel[axis] = 0;
+      }
+    }
+    const prevY = p.y; p.y += b.vel.y * dt; b.grounded = false; b.ground = null;
+    for (const c of S) {
+      if (!overlap(c, p.x, p.z, RAD * .5)) continue;
+      if (b.vel.y <= 0 && prevY >= c.top - .05 && p.y <= c.top) { p.y = c.top; b.vel.y = 0; b.grounded = true; b.ground = c; }
+      else if (b.vel.y > 0 && prevY + HT <= c.top - c.h && p.y + HT > c.top - c.h) { p.y = c.top - c.h - HT; b.vel.y = 0; }
+    }
+    if (want.lengthSq()) b.facing = Math.atan2(want.x, want.z);
+    let dr = b.facing - b.R.root.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); b.R.root.rotation.y += dr * Math.min(1, dt * 12);
+    animateRunner(b.R, dt, Math.hypot(b.vel.x, b.vel.z), b.grounded, t + (b.seed || 0));
+  }
+  function heads(b, dt, t) {
+    if (!b.aiming) { if (keys.roll && !b.prev1) b.aiming = 'roll'; else if (keys.throw && !b.prev2) b.aiming = 'throw'; if (b.aiming) b.track.reset(); }
+    b.prev1 = !!keys.roll; b.prev2 = !!keys.throw;
+    if (b.aiming) b.track.tick();
+    if (b.aiming && b.grounded && (AIM.up || (!keys[b.aiming] && !AIM.down))) {
+      const k = b.aiming, clicked = !!AIM.up || b.track.mouse, dest = AIM.up ? pickIsland(AIM.up) : b.track.mouse ? pickIsland(AIM) : null; b.aiming = null; b.travel.unaim();
+      if (!clicked || dest) { if (dest) { b.facing = Math.atan2(dest.x - b.pos.x, dest.z - b.pos.z); b.R.root.rotation.y = b.facing; } if (b.travel.start(k, b.facing, dest)) return true; }
+    }
+    return false;
+  }
+  function reset() {
+    for (const b of [...bodies]) removeBody(b);
+    bodies = []; abilities = new Set(L.has || []); done = 0; solved = 0; camInit = false; carry = null; sel = []; drag = null; hideRect(); ctx.classList.remove('on');
+    if (ghost) ghost.root.visible = false;
+    popups.splice(0).forEach(pp => pp.el.remove());
+    plates.forEach(p => { p.on = false; }); gates.forEach(g => { g.open = false; g.k = 0; g.meshes.forEach(m => { m.visible = false; }); });
+    if (crystal) { crystal.got = false; crystal.g.visible = true; }
+    const [sx, sz] = L.start, sy = topAt(sx, sz); checkpoint = V(sx, sy, sz);
+    addBody(sx, sy, sz, Math.PI).flick = 0;
+    syncHud(); if (L.intro) setTimeout(() => { if (active && !done) toast(L.intro[0], L.intro[1], null, 8); }, 600);
+  }
+  function update(dt) {
+    simT += dt; const t = simT;
+    for (const f of floaters) { f.rotation.x += f.userData.w * dt; f.rotation.y += f.userData.w * dt * .7; }
+    for (const pd of pads) pd.g.children[0].material.emissiveIntensity = (carry && ((carry.kind === 'copy') === (pd.type === 'copy')) ? .9 : .45) + Math.sin(t * 3) * .15 + (hoverPad === pd ? .5 : 0);
+    if (crystal && !crystal.got) { crystal.gem.rotation.y = t * 1.4; crystal.g.position.y = crystal.home.y + Math.sin(t * 2) * .15; }
+    if (exit) { exit.frame3.rotation.y = Math.sin(t * .8) * .25; exit.veil.material.opacity = .25 + Math.sin(t * 3) * .1 + (gates.every(g => g.open) ? .15 : 0); }
+    for (const g of gates) { g.k += ((g.open ? 1 : 0) - g.k) * Math.min(1, dt * 8); g.meshes.forEach((m, i) => { m.visible = g.k > .02; if (i % 2 === 0) m.material.opacity = .62 * g.k; else m.scale.setScalar(.6 + .4 * g.k); }); }
+    const solo = bodies.length === 1 && L.heads, lead = bodies[0];
+    let want = V(0, 0, 0);
+    if (!done) {
+      if (solo && lead.travel.active()) {
+        lead.travel.update(dt);
+        followCam(dt, lead.travel.active() ? lead.R.head.getWorldPosition(V(0, 0, 0)).add(V(0, 1.3 - lead.R.headY, 0)) : lead.pos.clone().add(V(0, 1.3, 0)));
+        placePopups(); return;
+      }
+      if (solo && heads(lead, dt, t)) { placePopups(); return; }
+      const ix = (keys.r ? 1 : 0) - (keys.l ? 1 : 0), iz = (keys.b ? 1 : 0) - (keys.f ? 1 : 0);
+      want = V(ix, 0, iz); if (want.lengthSq()) want.normalize().applyAxisAngle(V(0, 1, 0), yaw);
+    }
+    for (const b of [...bodies]) stepBody(b, dt, want, t);
+    if (solo && lead.aiming) { lead.R.root.updateMatrixWorld(true); const aimAt = lead.track.mouse ? pickIsland(AIM) : null; if (lead.track.mouse && !aimAt) lead.travel.unaim(); else lead.travel.aim(lead.aiming, lead.facing, t, aimAt); }
+    for (const b of [...bodies]) if (b.pos.y < -25) {
+      if (bodies.length > 1) { say('fall.sys', 'One of you fell out of the sky.'); removeBody(b); }
+      else { staticBurst(300); b.pos.copy(checkpoint); b.vel.set(0, 0, 0); }
+    }
+    for (const p of plates) {
+      p.on = bodies.some(b => b.grounded && b.R.root.visible && Math.abs(b.pos.x - p.x) < .8 && Math.abs(b.pos.z - p.z) < .8 && Math.abs(b.pos.y - p.y) < .06);
+      p.m.position.y = p.y + (p.on ? .01 : .04); p.m.material.emissiveIntensity += ((p.on ? .8 : 0) - p.m.material.emissiveIntensity) * Math.min(1, dt * 10);
+    }
+    for (const g of gates) {
+      const all = plates.filter(p => p.group === g.group), on = all.length && all.every(p => p.on);
+      if (g.latch) { if (on && !g.open) { g.open = true; chime(988); say('gate.sys', 'Unlocked. The bridge stays.'); } }
+      else if (on !== g.open) { g.open = on; if (on) chime(880); }
+    }
+    if (crystal && !crystal.got && bodies.some(b => crystal.g.position.distanceTo(b.pos.clone().add(V(0, 1.3, 0))) < 1.6)) {
+      crystal.got = true; crystal.g.visible = false; abilities.add(crystal.kind); syncHud(); chime(980);
+      toast(crystal.kind + '.crystal', crystal.kind === 'copy' ? 'Copy acquired. Drag a box around yourself, choose Copy (Ctrl+C), then click a turquoise square.' : 'Cut acquired. Drag a box around yourself, choose Cut (Ctrl+X), then click an orange ring to move there.', null, 10);
+    }
+    if (exit && !done && bodies.some(b => b.grounded && b.R.root.visible && Math.hypot(b.pos.x - exit.x, b.pos.z - exit.z) < .9 && Math.abs(b.pos.y - exit.y) < .1)) {
+      done = t; solved = 1; chime(523); setTimeout(() => chime(784), 250); toast('exit.lnk', 'Level clear.', V(exit.x, exit.y + 3, exit.z), 3);
+      setTimeout(() => { if (active) goNext(L.next); }, 1600);
+    }
+    if (carry) {
+      hoverPad = mouse ? padUnder(mouse) : null;
+      if (hoverPad && padFree(hoverPad)) { ghost.root.visible = true; ghost.root.position.set(hoverPad.x, hoverPad.y, hoverPad.z); ghost.root.rotation.y = carry.src.R.root.rotation.y;
+        POSE_KEYS.forEach(k => { ghost[k].rotation.copy(carry.src.R[k].rotation); if (k === 'hips' || k === 'body') ghost[k].position.copy(carry.src.R[k].position); });
+        const pulse = .8 + Math.sin(t * 6) * .2; GHOST.lineSkin.color.setRGB(.9 * pulse, .92 * pulse, pulse); GHOST.line.color.copy(GHOST.lineSkin.color); }
+      else ghost.root.visible = false;
+    } else if (sel.length && !drag) { sel = sel.filter(b => bodies.includes(b)); const r = sel.length && bounds(sel); if (r) rect(r.x0 - 6, r.y0 - 6, r.x1 + 6, r.y1 + 6); else clearSel(); }
+    const vis = bodies.filter(b => b.R.root.visible), c = (vis.length ? vis : bodies).reduce((a, b) => a.add(b.pos), V(0, 0, 0)).multiplyScalar(1 / Math.max(1, (vis.length ? vis : bodies).length));
+    if (L.focus) { const [x0, x1, z0, z1] = L.focus, k = L.k ?? .5; c.x += ((x0 + x1) / 2 - c.x) * k; c.z += ((z0 + z1) / 2 - c.z) * k; }
+    followCam(dt, c.add(V(0, 1.3, 0)));
+    placePopups();
+  }
+  reset();
+  return { scene, cam, update, reset, project: (x, y, z) => toFrame(V(x, y, z), cam),
+    enter() { active = true; reset(); }, leave() { active = false; drag = null; cancelCarry(); clearSel(); for (const k in keys) keys[k] = false; popups.splice(0).forEach(pp => pp.el.remove()); },
+    debug: () => ({ level: L.name, done: !!done, abilities: [...abilities], crew: bodies.map(b => ({ pos: [b.pos.x, b.pos.y, b.pos.z].map(v => +v.toFixed(2)), grounded: b.grounded, screen: centre(b) })),
+      plates: plates.map(p => p.on), gates: gates.map(g => g.open), carry: carry && carry.kind,
+      pads: pads.map(pd => ({ type: pd.type, screen: toFrame(V(pd.x, pd.y, pd.z), cam) })), crystal: crystal && crystal.got }) };
+}
+async function goNext(id) {
+  if (id === 'finale') { finale(); return; }
+  const rid = ++run;
+  try { await staticBurst(400); if (rid !== run) return; await enter(SCENE_AT(id), rid, false); } catch (e) {}
+}
+
+const PLAY_NOTE = 'WASD moves, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it. Drag to look. Find 4 memories, then roll your head into the pipe to reach the puzzle levels.';
 const SCENES = [
   { id: 'title',   name: 'Title',         note: 'Hover the sea to stir it; click to drop a ripple.', ov: 'titleOv', build: buildTitle },
   { id: 'open',    name: 'Cold open',     note: 'Text cards. Click or Enter skips, Esc goes to the game.', ov: 'cards', lines: ['Did anyone ever log out?', 'Or did we just stop coming back?'] },
@@ -1701,6 +2081,11 @@ const SCENES = [
   { id: 'player',  name: 'Memory player', note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: 'playerOv', build: buildPlayer, walk: true },
   { id: 'goup',    name: 'Go back up',    note: 'Text card.', ov: 'cards', lines: ['Will you go back up?'] },
   { id: 'climb',   name: 'The climb',     note: PLAY_NOTE, ov: 'playOv', build: buildClimb, walk: true },
+  { id: 'lvcopy',  name: 'Copy crystal',  note: 'Pick up the crystal. Drag a box around yourself, choose Copy, then click a turquoise square. Every copy moves when you move.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvcopy), walk: true },
+  { id: 'lvsync',  name: 'In sync',       note: 'Copy yourself onto the other lane, then walk both of you onto the plates. A copy that falls is gone; make another.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvsync), walk: true },
+  { id: 'lvcut',   name: 'Cut',           note: 'Pick up the cut crystal. Drag a box around yourself, choose Cut, then click an orange ring to move there.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvcut), walk: true },
+  { id: 'lvboth',  name: 'Copy and cut',  note: 'Copies go on turquoise squares, cuts go on orange rings. Hold all three plates at once.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvboth), walk: true },
+  { id: 'lvhead',  name: 'Heads up',      note: 'Hold 2 and point to throw your head over a wall; hold 1 and point to roll it under a bar. Your body grows back where it stops.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvhead), walk: true },
   { id: 'lights',  name: 'Lights on',     note: 'Text card.', ov: 'cards', lines: ['Then who kept the lights on?'] },
   { id: 'reveal',  name: 'Halcyon',       note: 'Character reveal, low-poly and turning.', ov: 'revealOv', build: buildReveal },
 ];
