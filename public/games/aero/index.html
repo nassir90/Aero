@@ -18,7 +18,7 @@
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans); overflow-x: hidden; }
 .capture, .capture body { height: 100%; overflow: hidden; }
-.stage { height: 100vh; height: 100svh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding-inline: 16px; padding-block: 10px; }
+.stage { height: 100vh; height: 100svh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; padding-inline: 16px; padding-block: 10px; }
 .frame { position: relative; width: var(--fw, 800px); height: calc(var(--fw, 800px) / var(--ar, 1.33333)); max-width: 100%; overflow: hidden; background: #000; font-size: calc(var(--fw, 800px) / 50); user-select: none; }
 #gl, #static { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
 #gl { touch-action: none; }
@@ -36,10 +36,9 @@ body { margin: 0; background: var(--ground); color: var(--ink); font-family: var
 .bar select option { background: var(--ground); color: var(--ink); }
 .bar button:hover, .bar select:hover { border-color: var(--dim); }
 .bar button:focus-visible, .bar select:focus-visible, .frame button:focus-visible { outline: 2px solid var(--lilac); outline-offset: 2px; }
-.bar #skipBtn { border-color: var(--lilac); }
+.bar #skipBtn { border-color: var(--lilac); order: 1; }
 
 .marquee { position: absolute; display: none; border: .16em dashed #d4e0ff; background: rgba(90,130,255,.14); box-sizing: border-box; }
-.word { position: absolute; right: 4%; bottom: 4%; font: 400 2.6em var(--sans); color: #6f6d78; letter-spacing: .01em; }
 #begin { position: absolute; left: 4%; bottom: 5%; font: 700 1em var(--pixel); color: #1c1b22; background: #ecebf2; border: 0; padding: .6em 1.4em; cursor: pointer; box-shadow: 0 0 0 2px #1c1b22, 0 0 0 4px #ecebf2; }
 .stage.story #begin { display: none; }
 #copyOv, #titleOv, #puzzleOv { cursor: crosshair; touch-action: none; }
@@ -59,20 +58,16 @@ body { margin: 0; background: var(--ground); color: var(--ink); font-family: var
 .plate { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); background: #f2f1f6; padding: .5em 1.1em; mix-blend-mode: screen; }
 .plate b { display: block; font: 700 6em/1 var(--pixel); color: #000; letter-spacing: .06em; }
 
-.name { position: absolute; left: 0; right: 0; top: 4%; text-align: center; }
-.name b { display: block; font: 700 4.4em/1 var(--pixel); letter-spacing: .04em; color: #ff5ad6; text-shadow: .08em 0 0 #5b3cff, -.04em 0 0 #36d6ff; }
-.name span { font: 1em var(--pixel); color: #e7dcff; letter-spacing: .1em; }
-.scan { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px); }
 
 #tapeCv { position: absolute; top: 0; bottom: 0; left: 12.5%; width: 75%; height: 100%; image-rendering: pixelated; }
 .shape-tall #tapeCv, .shape-square #tapeCv { left: 0; width: 100%; height: auto; aspect-ratio: 1; top: 50%; bottom: auto; transform: translateY(-50%); }
 .shape-tall .wmp { left: 6%; top: 5%; width: 88%; }
 .shape-square .wmp { left: 5%; top: 5%; width: 60%; }
-.capture .stage { padding: 0; gap: 0; }
+.capture .stage { padding: 0; gap: 0; justify-content: center; }
 .capture .more { display: none; }
 html:not(.capture) body { position: relative; z-index: 0; background: #1b75be; }
-html:not(.capture) body::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; z-index: -1; height: min(100%, 260vh); background: url(assets/sky_wide.jpg) center bottom / cover no-repeat;
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 32%); mask-image: linear-gradient(180deg, transparent 0, #000 32%); pointer-events: none; }
+html:not(.capture) body::before { content: ""; position: absolute; left: 0; right: 0; top: 0; z-index: -1; height: min(100%, 260vh); background: url(assets/sky_wide.jpg) center top / cover no-repeat;
+  -webkit-mask-image: linear-gradient(0deg, transparent 0, #000 32%); mask-image: linear-gradient(0deg, transparent 0, #000 32%); pointer-events: none; }
 html:not(.capture) .frame { box-shadow: 0 18px 44px rgba(16,40,110,.4), 0 0 0 1px rgba(255,255,255,.6); }
 html:not(.capture) .bar { padding: 8px 12px; background: rgba(14,18,52,.62); border: 1px solid rgba(255,255,255,.35); border-radius: 6px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 html:not(.capture) .bar p { color: #c4c8e6; }
@@ -160,7 +155,7 @@ html:not(.capture) .bar p { color: #c4c8e6; }
 .pad .jump { width: 3.6em; height: 3.6em; border-radius: 50%; pointer-events: auto; }
 @media (pointer: coarse) { .pad { display: flex; } }
 .frame:not(.walk) .pad { display: none !important; }
-.end { position: absolute; inset: 0; display: none; place-items: center; align-content: center; gap: .8em; background: linear-gradient(180deg, transparent 40%, rgba(20,16,40,.45)); text-align: center; }
+.end { position: absolute; inset: 0; z-index: 30; display: none; place-items: center; align-content: center; gap: .8em; background: rgba(14,12,34,.74); text-align: center; }
 .end.on { display: grid; }
 .end b { font: 700 4em/1 var(--pixel); color: #f2f1f6; text-shadow: 0 .12em 0 #2f34c9; }
 .end p { margin: 0; font: 1em var(--pixel); color: #fff; }
@@ -168,37 +163,12 @@ html:not(.capture) .bar p { color: #c4c8e6; }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
 </style>
 
-<section class="more" id="more" aria-labelledby="moreTitle">
-  <header class="more-head">
-    <h2 id="moreTitle">Aero</h2>
-    <p>A short game about a network nobody logged out of. Throw your head, copy yourself, and find your way back up. Its style is inspired by <a href="https://www.instagram.com/reel/Dd4YWXbojO4/" target="_blank" rel="noopener">this reel</a> by <a href="https://www.instagram.com/snaptic_/" target="_blank" rel="noopener">@snaptic_</a>.</p>
-  </header>
-  <article class="clip">
-    <video src="media/sq_sea.mp4" poster="media/sq_sea.jpg" autoplay muted loop playsinline preload="metadata" aria-label="The title sea throwing a drop of digits"></video>
-    <div class="clip-text"><h3>A sea of ones and zeros</h3><p>The title screen is ten thousand digits on a shader. Click and the surface sinks, rises into a peak, and throws a drop of digits that falls back in with one smaller ripple.</p></div>
-  </article>
-  <article class="clip flip">
-    <video src="media/sq_merge.mp4" poster="media/sq_merge.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Four copies throwing their heads at one spot and merging"></video>
-    <div class="clip-text"><h3>Copy yourself</h3><p>Log in, drag a box around yourself, copy and paste. Throw every head at the same spot and the bodies grow back, lock into the same step, and merge into one.</p></div>
-  </article>
-  <article class="clip">
-    <video src="media/sq_arrival.mp4" poster="media/sq_arrival.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Walking the glass path past photos"></video>
-    <div class="clip-text"><h3>Arrival</h3><p>A glass walkway between "welcome back." and "We Missed You", lined with photos of places you might have forgotten: a sunset field, a glacier, sand dunes, a green hill.</p></div>
-  </article>
-  <article class="clip flip">
-    <video src="media/sq_climb.mp4" poster="media/sq_climb.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Throwing the head to the next platform"></video>
-    <div class="clip-text"><h3>The climb</h3><p>Hold 2 and point to throw your head to the next platform. Find four memories, then roll your head into the pipe, which leads on to the puzzle levels.</p></div>
-  </article>
-  <footer class="more-foot"><a href="#stage" class="play-link">Play Aero ↓</a><p>mpts.ie/games/aero</p></footer>
-</section>
-
 <main class="stage" id="stage">
   <div class="frame" id="frame">
     <canvas id="gl" width="400" height="300"></canvas>
 
     <section class="ov" id="copyOv">
       <div class="marquee" id="marquee"></div>
-      <div class="word">teleportation</div>
       <div class="ctx vista" id="ctx">
         <button type="button" data-a="copy"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 1.5h9.5L14.5 4.5V14.5H2z" fill="#5b79c9" stroke="#1d2f66"/><rect x="4.5" y="1.5" width="6" height="4" fill="#dfe7fb" stroke="#1d2f66"/><rect x="8.3" y="2.3" width="1.4" height="2.4" fill="#1d2f66"/><rect x="4" y="8.5" width="8.5" height="6" rx=".5" fill="#f4f6fd" stroke="#1d2f66"/><path d="M5.5 10.5h5.5M5.5 12.3h5.5" stroke="#9aa9d4"/></svg>Copy<kbd>Ctrl C</kbd></button>
         <button type="button" data-a="cut"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 9.6 11.8 1.5M10.8 9.6 4.2 1.5" stroke="#44506f" stroke-width="1.6" stroke-linecap="round"/><circle cx="4.6" cy="12" r="2.4" fill="none" stroke="#c0392b" stroke-width="1.6"/><circle cx="11.4" cy="12" r="2.4" fill="none" stroke="#c0392b" stroke-width="1.6"/><circle cx="8" cy="7.2" r=".8" fill="#44506f"/></svg>Cut<kbd>Ctrl X</kbd></button>
@@ -211,8 +181,6 @@ html:not(.capture) .bar p { color: #c4c8e6; }
 
     <section class="ov" id="titleOv"><div class="plate"><b>AERO</b></div></section>
 
-    <section class="ov" id="revealOv"><div class="name"><b>HALCYON</b><span>cloud warden</span></div><div class="scan"></div>
-      <div class="end" id="end"><b>AERO</b><p>4 of 4 memories recovered. Welcome back.</p><button id="again" type="button">Play again</button></div></section>
 
     <section class="ov" id="tapeOv"><canvas id="tapeCv" width="240" height="240"></canvas></section>
 
@@ -248,6 +216,8 @@ html:not(.capture) .bar p { color: #c4c8e6; }
       <div class="toasts" id="toasts"></div>
     </section>
 
+    <div class="end" id="end"><b>AERO</b><p>4 of 4 memories recovered. Welcome back.</p><button id="again" type="button">Play again</button></div>
+
     <div class="pad">
         <div>
           <span></span><button data-k="f" aria-label="Forward">▲</button><span></span>
@@ -273,6 +243,30 @@ html:not(.capture) .bar p { color: #c4c8e6; }
     </div>
   </nav>
 </main>
+
+<section class="more" id="more" aria-labelledby="moreTitle">
+  <header class="more-head">
+    <h2 id="moreTitle">Aero</h2>
+    <p>A short game about a network nobody logged out of. Throw your head, copy yourself, and find your way back up. Its style is inspired by <a href="https://www.instagram.com/reel/Dd4YWXbojO4/" target="_blank" rel="noopener">this reel</a> by <a href="https://www.instagram.com/snaptic_/" target="_blank" rel="noopener">@snaptic_</a>.</p>
+  </header>
+  <article class="clip">
+    <video src="media/sq_sea.mp4" poster="media/sq_sea.jpg" autoplay muted loop playsinline preload="metadata" aria-label="The title sea throwing a drop of digits"></video>
+    <div class="clip-text"><h3>A sea of ones and zeros</h3><p>The title screen is ten thousand digits on a shader. Click and the surface sinks, rises into a peak, and throws a drop of digits that falls back in with one smaller ripple.</p></div>
+  </article>
+  <article class="clip flip">
+    <video src="media/sq_merge.mp4" poster="media/sq_merge.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Four copies throwing their heads at one spot and merging"></video>
+    <div class="clip-text"><h3>Copy yourself</h3><p>Log in, drag a box around yourself, copy and paste. Throw every head at the same spot and the bodies grow back, lock into the same step, and merge into one.</p></div>
+  </article>
+  <article class="clip">
+    <video src="media/sq_arrival.mp4" poster="media/sq_arrival.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Walking the glass path past photos"></video>
+    <div class="clip-text"><h3>Arrival</h3><p>A glass walkway between "welcome back." and "We Missed You", lined with photos of places you might have forgotten: a sunset field, a glacier, sand dunes, a green hill.</p></div>
+  </article>
+  <article class="clip flip">
+    <video src="media/sq_climb.mp4" poster="media/sq_climb.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Throwing the head to the next platform"></video>
+    <div class="clip-text"><h3>The climb</h3><p>Hold 2 and point to throw your head to the next platform. Find four memories, then roll your head into the pipe, which leads on to the puzzle levels.</p></div>
+  </article>
+  <footer class="more-foot"><a href="#stage" class="play-link">Play Aero ↑</a><p>mpts.ie/games/aero</p></footer>
+</section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -331,12 +325,6 @@ const ENV_CHROME = (() => {
   return new THREE.PMREMGenerator(renderer).fromScene(s, .08).texture;
 })();
 
-function capsule(r, len, seg = 14) {
-  const pts = [];
-  for (let i = 0; i <= 6; i++) { const a = -Math.PI / 2 + i / 6 * Math.PI / 2; pts.push(new THREE.Vector2(Math.max(1e-4, r * Math.cos(a)), -len / 2 + r * Math.sin(a))); }
-  for (let i = 0; i <= 6; i++) { const a = i / 6 * Math.PI / 2; pts.push(new THREE.Vector2(Math.max(1e-4, r * Math.cos(a)), len / 2 + r * Math.sin(a))); }
-  return new THREE.LatheGeometry(pts, seg);
-}
 const silver = skin => new THREE.MeshStandardMaterial({ color: 0xe6e6ec, metalness: .92, roughness: .3, envMap: ENV_CHROME, envMapIntensity: 1.15, skinning: !!skin });
 function roundCone(px, py, pz, ax, ay, az, bx, by, bz, r1, r2) {
   const bax = bx - ax, bay = by - ay, baz = bz - az, l2 = bax * bax + bay * bay + baz * baz, rr = r1 - r2, a2 = l2 - rr * rr, il2 = 1 / l2;
@@ -1319,50 +1307,6 @@ function buildArrival() {
     enter() {}, leave() {} };
 }
 
-function buildReveal() {
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1c0e58);
-  const cam = new THREE.PerspectiveCamera(FOV(36), RW / RH, .1, 100); cam.position.set(0, 1.5, 10); cam.lookAt(0, 1.25, 0);
-  scene.add(new THREE.AmbientLight(0x5a44c0, .55));
-  const pm = new THREE.PointLight(0xff4fd8, 1.5, 14); pm.position.set(-3, 2.6, 3); scene.add(pm);
-  const pc = new THREE.PointLight(0x39d8ff, 1.2, 14); pc.position.set(3.2, .6, 2.6); scene.add(pc);
-  const kd = new THREE.DirectionalLight(0xffffff, .35); kd.position.set(0, 4, 6); scene.add(kd);
-  const PAL = ['#ff3fc8', '#ff3fc8', '#b43cff', '#7a3cff', '#3b5bff', '#3b5bff', '#29d8ff', '#ffffff', '#2b145f', '#2b145f'];
-  const paint = (geo, pal = PAL) => { geo = geo.toNonIndexed(); const n = geo.attributes.position.count, col = new Float32Array(n * 3);
-    for (let f = 0; f < n; f += 3) { const c = new THREE.Color(pal[(Math.random() * pal.length) | 0]); for (let k = 0; k < 3; k++) col.set([c.r, c.g, c.b], (f + k) * 3); }
-    geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals(); return geo; };
-  const fm = new THREE.MeshPhongMaterial({ vertexColors: true, flatShading: true, shininess: 30, specular: 0x222233, toneMapped: false });
-  const H = new THREE.Group(); scene.add(H);
-  const part = (geo, x, y, z, sx = 1, sy = 1, sz = 1, parent = H) => { const m = new THREE.Mesh(paint(geo), fm); m.position.set(x, y, z); m.scale.set(sx, sy, sz); parent.add(m); return m; };
-  part(new THREE.OctahedronGeometry(1, 1), 0, 1.35, 0, .44, 1.0, .32);
-  part(new THREE.OctahedronGeometry(.5, 0), 0, 2.28, 0, .9, .35, .7);
-  const head = part(new THREE.IcosahedronGeometry(.3, 0), .04, 3.02, 0, .85, 1.25, .85);
-  head.rotation.z = -.22;
-  const lamp = new THREE.Mesh(new THREE.OctahedronGeometry(.1, 0), new THREE.MeshBasicMaterial({ color: 0xffe7ff })); lamp.position.set(.04, 3.0, .22); H.add(lamp);
-  part(new THREE.ConeGeometry(.5, 1.9, 5, 2), 0, -.35, 0, 1, 1, 1).rotation.x = Math.PI;
-  const tail = []; for (let i = 0; i < 7; i++) tail.push(part(new THREE.TetrahedronGeometry(.13 + Math.random() * .1, 0), (Math.random() - .5) * .6, -1.4 - i * .28, (Math.random() - .5) * .4));
-  const arm = (x, y, parts) => { const g = new THREE.Group(); g.position.set(x, y, 0); H.add(g); parts.forEach(([geo, px, py, pz, rx, rz, s]) => { const m = part(geo, px, py, pz, s[0], s[1], s[2], g); m.rotation.set(rx, 0, rz); }); return g; };
-  const la = arm(-.52, 2.2, [[new THREE.CylinderGeometry(.09, .06, 1.2, 4), 0, -.6, 0, 0, 0, [1, 1, 1]], [new THREE.CylinderGeometry(.06, .05, 1.1, 4), -.04, -1.72, 0, 0, .05, [1, 1, 1]], [new THREE.OctahedronGeometry(.2, 0), -.06, -2.42, 0, 0, 0, [.8, 1.7, .5]]]);
-  la.rotation.set(-.5, 0, -2.1);
-  const ra = arm(.52, 2.2, [[new THREE.CylinderGeometry(.09, .06, 1.1, 4), 0, -.55, 0, 0, 0, [1, 1, 1]], [new THREE.CylinderGeometry(.06, .05, 1.0, 4), 0, -1.6, 0, 0, 0, [1, 1, 1]], [new THREE.OctahedronGeometry(.18, 0), 0, -2.2, 0, 0, 0, [1.3, .5, 1.1]]]);
-  ra.rotation.set(-1.25, 0, .35);
-  const cube = new THREE.Mesh(new THREE.BoxGeometry(.26, .26, .26), new THREE.MeshBasicMaterial({ color: 0x9ff4ff })); cube.position.set(0, -2.55, .05); ra.add(cube);
-  const glow = new THREE.PointLight(0x7ff0ff, 1.2, 3); cube.add(glow);
-  head.rotation.set(.35, 0, -.35);
-  const orbit = new THREE.Group(); orbit.position.y = 1.6; orbit.rotation.z = .3; H.add(orbit);
-  for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, m = part(new THREE.TetrahedronGeometry(.09 + (i % 3) * .03, 0), Math.cos(a) * 1.25, (i % 2 ? .12 : -.12), Math.sin(a) * 1.25, 1, 1, 1, orbit); m.rotation.set(a, a * 2, 0); }
-  const sg = new THREE.BufferGeometry(), sp = new Float32Array(420 * 3); for (let i = 0; i < 420; i++) sp.set([(Math.random() - .5) * 40, (Math.random() - .5) * 26, -8 - Math.random() * 20], i * 3);
-  sg.setAttribute('position', new THREE.BufferAttribute(sp, 3)); scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffd8ff, size: 1.5, sizeAttenuation: false })));
-  H.position.y = -.2;
-  return { scene, cam,
-    update(dt, t) {
-      H.rotation.y = Math.sin(t * .35) * .45; H.rotation.x = .2; H.position.y = -.2 + Math.sin(t * 1.1) * .08;
-      ra.rotation.x = -1.25 + Math.sin(t * .9) * .12; la.rotation.z = -2.1 + Math.sin(t * .7 + 1) * .12;
-      orbit.rotation.y = t * .6; cube.rotation.set(t * 1.3, t * .9, 0); lamp.rotation.y = t * 2;
-      tail.forEach((m, i) => { m.position.x = Math.sin(t * 1.5 + i) * .25; m.rotation.y = t + i; });
-      head.rotation.y = Math.sin(t * .5) * .25;
-    },
-    enter() {}, leave() {} };
-}
 
 const lake = new Image(); lake.src = 'assets/memory.jpg';
 let lakeCanvas = null;
@@ -1404,7 +1348,7 @@ function drawTape(cv, t, sub) {
 }
 function buildTape() {
   const cv = $('#tapeCv');
-  return { scene: null, cam: null, update(dt, t) { drawTape(cv, t, 'do you remember the lake?'); }, enter() {}, leave() {} };
+  return { scene: null, cam: null, update(dt, t) { drawTape(cv, t, ''); }, enter() {}, leave() {} };
 }
 
 function buildPlayer() {
@@ -2141,7 +2085,7 @@ const SCENES = [
   { id: 'arrive',  name: 'Arrival',       note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: null, build: buildArrival, walk: true },
   { id: 'tape',    name: 'The lake',      note: 'Found tape: square, blown out, pixel subtitle.', ov: 'tapeOv', build: buildTape },
   { id: 'player',  name: 'Memory player', note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: 'playerOv', build: buildPlayer, walk: true },
-  { id: 'goup',    name: 'Go back up',    note: 'Text card.', ov: 'cards', lines: ['Will you go back up?'] },
+  { id: 'goup',    name: 'Go back up',    note: 'Text card.', ov: 'cards', lines: ['Intro'] },
   { id: 'climb',   name: 'The climb',     note: PLAY_NOTE, ov: 'playOv', build: buildClimb, walk: true },
   { id: 'lvcopy',  name: 'Copy crystal',  note: 'Pick up the crystal. Drag a box around yourself, choose Copy, then click a turquoise square. Every copy moves when you move.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvcopy), walk: true },
   { id: 'lvsync',  name: 'In sync',       note: 'Copy yourself onto the other lane, then walk both of you onto the plates. A copy that falls is gone; make another.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvsync), walk: true },
@@ -2158,13 +2102,10 @@ const SCENES = [
   { id: 'lvleap', name: 'Leapfrog', note: 'A copy holds the first bridge; cut it forward to hold the second.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvleap), walk: true },
   { id: 'lvdelete', name: 'Back to one', note: 'Copy to open the long bridge, then delete the copy so your head can travel again.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvdelete), walk: true },
   { id: 'lvfinal', name: 'All together', note: 'Copy, cut, hold three plates, delete both copies, throw, then roll.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvfinal), walk: true },
-  { id: 'lights',  name: 'Lights on',     note: 'Text card.', ov: 'cards', lines: ['Then who kept the lights on?'] },
-  { id: 'reveal',  name: 'Halcyon',       note: 'Character reveal, low-poly and turning.', ov: 'revealOv', build: buildReveal },
 ];
 const CLIMB = SCENES.findIndex(d => d.id === 'climb');
 const SCENE_AT = id => SCENES.findIndex(d => d.id === id);
 const STORY = [['title', 0, 3000], ['open', 350, 0], ['copy', 250, 5600], ['arrive', 300, 4200], ['tape', 500, 3600], ['player', 300, 3800], ['goup', 400, 0], ['climb', 0, 0]].map(([id, pre, hold]) => [SCENE_AT(id), pre, hold]);
-const FINALE = [['lights', 400, 0], ['reveal', 400, 4600]].map(([id, pre, hold]) => [SCENE_AT(id), pre, hold]);
 
 const built = new Map();
 const get = i => { const d = SCENES[i]; if (!d.build) return null; if (!built.has(i)) built.set(i, d.build()); return built.get(i); };
@@ -2189,7 +2130,6 @@ async function enter(i, id, hold) {
   inputOn = !!d.walk; if (!inputOn) clearKeys(); frame.classList.toggle('walk', inputOn);
   canvas.style.visibility = activeScene && activeScene.scene ? 'visible' : 'hidden';
   if (activeScene && activeScene.enter) activeScene.enter();
-  if (d.id === 'reveal') chime(660);
   if (d.lines) await card(d.lines, id, hold);
 }
 function storyMode(on) { stage.classList.toggle('story', on); $('#skipBtn').style.visibility = on ? '' : 'hidden'; }
@@ -2224,16 +2164,8 @@ addEventListener('resize', fitAll); fitAll(); if (document.fonts) document.fonts
 $('#cards').addEventListener('click', () => { advance = true; });
 $('#again').onclick = () => { get(CLIMB).reset(); jumpTo(CLIMB); };
 async function finale() {
-  const id = ++run;
-  try {
-    for (const [i, pre, hold] of FINALE) {
-      if (pre) await staticBurst(pre);
-      if (id !== run) return;
-      await enter(i, id, false);
-      if (hold) await beat(hold, id);
-    }
-    if (id === run) $('#end').classList.add('on');
-  } catch (e) {  }
+  ++run; inputOn = false; clearKeys(); frame.classList.remove('walk');
+  await staticBurst(400); chime(660); $('#end').classList.add('on');
 }
 addEventListener('keydown', e => {
   const onControl = /^(INPUT|BUTTON|SELECT)$/.test(document.activeElement && document.activeElement.tagName);

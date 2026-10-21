@@ -6,7 +6,7 @@ A short three.js game about a network nobody logged out of. Its style is inspire
 
 ## Scenes
 
-The bar under the game steps through each scene. You can also jump straight to one with `#s0` to `#s9`.
+The bar under the game steps through each scene. You can also jump straight to one with `#s0` to `#s22`.
 
 | | |
 |---|---|
@@ -21,11 +21,11 @@ The bar under the game steps through each scene. You can also jump straight to o
 | ![Arrival, green hill and butterfly](docs/arrival_4.jpg) | ![Arrival, the end of the path](docs/arrival_5.jpg) |
 | a green hill and a golden butterfly. | The path ends at a blue "We Missed You" sign. |
 | ![The lake](docs/lake_tape.jpg) | ![Memory player](docs/memory_player.jpg) |
-| **5. The lake.** A found tape: square, blown out, with a pixel subtitle. | **6. Memory player.** A draggable media player window over the level. |
+| **5. The lake.** A found tape: square and blown out. | **6. Memory player.** A draggable media player window over the level. |
 | ![The climb](docs/climb.jpg) | ![Aiming a head throw](docs/climb_aim.jpg) |
-| **7. Go back up**, a text card, leads into **8. The climb.** Pillars fading into white, four memories to collect, and a pipe home. | Tap **2** to throw your head to the next platform. Hold 2 and move the mouse to aim at a spot, then release the key or click. The path shows as silver beads ending at a ring; pink beads mean the head would fall. |
-| ![Rolling into the pipe](docs/climb_pipe_in.jpg) | ![Halcyon](docs/halcyon.jpg) |
-| The pipe lies on the top plaza. Once all four memories are found, roll your head into it with **1**. | The ride down ends the game: **9. Lights on**, a text card, then **10. Halcyon**, the cloud warden who kept the lights on. |
+| **7. Intro**, a text card, leads into **8. The climb.** Pillars fading into white, four memories to collect, and a pipe. | Tap **2** to throw your head to the next platform. Hold 2 and move the mouse to aim at a spot, then release the key or click. The path shows as silver beads ending at a ring; pink beads mean the head would fall. |
+| ![Rolling into the pipe](docs/climb_pipe_in.jpg) | |
+| The pipe lies on the top plaza. Once all four memories are found, roll your head into it with **1**. | The pipe leads on to the 15 puzzle levels (`#s8` to `#s22`). Finishing the last one shows the end screen. |
 
 ## Controls
 
@@ -47,6 +47,6 @@ The bar under the game steps through each scene. You can also jump straight to o
 - `promo/` makes the videos. `promo/takes.mjs` lists the takes that TapaTab (`~/projects/TapaTab`) records frame by frame from the running game, `promo/rigs.js` drives each scene, and ShadowKit (`~/projects/ShadowKit`) builds each video in `promo/videos/` from its edit list, script and voiceover (`python3 ~/projects/ShadowKit/make.py <id>`, run from `promo/`).
 - The game also renders natively at other shapes: add `?shape=9x16` or `?shape=1x1` to the URL, and `&capture` to hide the controls. `studio/promo.js` and `studio/shadow/clips.js` hold the older scripted shots that `promo/takes.mjs` still reuses, and `studio/capture.mjs` renders the square site clips (`node studio/capture.mjs sq_sea 1x1 out/`).
 - `tests/puzzles.py` plays every puzzle level with real keyboard and mouse input in headless Chrome (`python3 tests/puzzles.py`, or name tests to run only those).
-- The page opens on the square clips (`public/games/aero/media/`) and scrolls down through the sky to the game, which sits on the clouds at the bottom. The sky image fades in through a gradient mask over a blue sampled from its top edge, so there is no seam.
+- The page opens on the game, which sits in the clouds at the top, and scrolls down to the square clips (`public/games/aero/media/`). The sky image fades out through a gradient mask into a blue sampled from its top edge.
 - `docs/` holds the screenshots above.
 - `cloudflare.config.ts` and `src/index.ts` define the Cloudflare Worker that serves `public/` on the route `mpts.ie/games/aero*`. Run `npm install`, then `npx cf deploy`. mpts.ie itself is [BannerAndLogo](https://github.com/nassir90/BannerAndLogo) on `mpts.ie/*`; this route is more specific, so it wins. Aero is listed on the games index, [mpts.ie/games](https://mpts.ie/games/), and has a stack of clips on the home page (BannerAndLogo's `site/games/index.html` and `site/index.html`), so a changed route needs updating there too.

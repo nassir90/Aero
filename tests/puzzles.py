@@ -325,8 +325,9 @@ def final(g):
 def chain_final(g):
     ok, note = final(g)
     if not ok: return False, note
-    name = g.scene_after("Lights on", "Halcyon")
-    return name in ("Lights on", "Halcyon"), f"after All together the scene is {name!r} (expected the finale)"
+    try: g.pg.wait_for_function("document.getElementById('end').classList.contains('on')", timeout=8000); shown = True
+    except Exception: shown = False
+    return shown, f"after All together the end screen is {'shown' if shown else 'not shown'}"
 
 def lvhead_walls(g):
     g.hold("KeyW", 2); d = g.dbg(); a = z(d)
