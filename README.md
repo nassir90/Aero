@@ -12,8 +12,8 @@ The bar under the game steps through each scene. You can also jump straight to o
 |---|---|
 | ![Title](docs/title.jpg) | ![A drop leaving the sea](docs/title_drop.jpg) |
 | **1. Title.** Hover to stir the sea of digits. | Click to drop a ripple. The centre sinks, rebounds into a peak, and throws off a blob of digits. The blob falls back in and sends out one smaller ripple. |
-| ![Cold open](docs/cold_open.jpg) | ![Copy, before logging in](docs/copy_login.jpg) |
-| **2. Cold open.** Text cards. | **3. Copy.** The room starts empty; Log in spawns the runner. Drag a box around him and pick Copy, Cut or Delete. The dashed box follows the selection as it moves and resizes with depth. |
+| ![Tutorial](docs/cold_open.jpg) | ![Copy, before logging in](docs/copy_login.jpg) |
+| **2. Tutorial.** Text cards. | **3. Copy.** The room starts empty; Log in spawns the runner. Drag a box around him and pick Copy, Cut or Delete. The dashed box follows the selection as it moves and resizes with depth. |
 | ![Copying the crew](docs/copy_crew.jpg) | ![Arrival, sunset and daffodil](docs/arrival_1.jpg) |
 | Copies walk together. While you carry a copy, grey ghosts preview where it will land. Delete everyone and Log in comes back. Hold Shift while aiming heads and the crew keeps its formation. | **4. Arrival.** A glass walkway between "welcome back." and "We Missed You", with blocks flying along its whole length. |
 | ![Arrival, hands and penguin](docs/arrival_2.jpg) | ![Arrival, glacier and dunes](docs/arrival_3.jpg) |
