@@ -1,6 +1,6 @@
 # Aero
 
-A short three.js game about a network nobody logged out of. Its style is inspired by [a reel by @snaptic_](https://www.instagram.com/reel/Dd4YWXbojO4/). It renders at 400×300 and scales up with hard pixels. Play it at https://mpts.ie/games/aero/.
+A short three.js game. Its style is inspired by [a reel by @snaptic_](https://www.instagram.com/reel/Dd4YWXbojO4/). It renders at 400×300 and scales up with hard pixels. Play it at https://mpts.ie/games/aero/.
 
 ![Title: a sea of ones and zeros](docs/title.jpg)
 
