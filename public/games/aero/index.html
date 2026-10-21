@@ -26,22 +26,44 @@ body { margin: 0; background: var(--ground); color: var(--ink); font-family: var
 .ov { position: absolute; inset: 0; display: none; }
 .ov.on { display: block; }
 
-.bar { width: var(--fw, 800px); max-width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; }
-.bar-text { min-width: 0; flex: 1 1 240px; }
-.bar h1 { margin: 0; font: 700 15px/1.2 var(--pixel); letter-spacing: .04em; }
-.bar p { margin: 2px 0 0; font-size: 13px; color: var(--dim); }
-.bar .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.bar { width: var(--fw, 800px); max-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; gap: 8px; position: relative; }
+.bar-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.bar h1 { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 15px/1.2 var(--pixel); letter-spacing: .04em; }
+.bar .controls { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; }
 .bar button, .bar select { font: 13px var(--pixel); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 0; padding: 5px 10px; cursor: pointer; }
-.bar select { max-width: 12rem; }
+.bar .controls > * { flex: 1 1 auto; }
+.bar #newBtn, .bar #skipBtn, .bar #mute { flex: 2 1 8rem; }
+.bar #prevBtn, .bar #nextBtn { flex: 0 0 2.4rem; }
+.bar select { flex: 4 1 12rem; min-width: 0; }
+.help { position: static; flex: none; }
+.help summary { list-style: none; cursor: pointer; font: 13px var(--pixel); color: var(--ink); border: 1px solid var(--line); padding: 4px 10px; }
+.help summary::-webkit-details-marker { display: none; }
+.help summary::after { content: " ▾"; }
+.help[open] summary::after { content: " ▴"; }
+.help-pop { position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); z-index: 50; padding: 12px 14px; background: rgba(14,18,52,.94); border: 1px solid rgba(255,255,255,.35); border-radius: 6px; }
+.help-pop ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 8px 18px; font-size: 13px; color: #e6e8f6; }
+.help-pop li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.help-pop li > span { color: var(--ink); white-space: nowrap; }
+.help-pop kbd { font: 600 11px/1 ui-monospace, Menlo, monospace; color: var(--ink); border: 1.5px solid var(--ink); padding: 3px 6px; margin-right: 2px; }
+.keys-touch { display: none !important; }
+@media (max-width: 560px) {
+  .bar .controls { display: grid; grid-template-columns: 2.6rem 1fr 1fr 2.6rem; }
+  .bar #newBtn, .bar #skipBtn { grid-row: 1; grid-column: 1 / 3; }
+  .bar #mute { grid-row: 1; grid-column: 3 / 5; }
+  .bar #prevBtn { grid-row: 2; grid-column: 1; }
+  .bar select { grid-row: 2; grid-column: 2 / 4; }
+  .bar #nextBtn { grid-row: 2; grid-column: 4; }
+}
+@media (pointer: coarse) { .keys-desk { display: none !important; } .keys-touch { display: grid !important; } }
 .bar select option { background: var(--ground); color: var(--ink); }
 .bar button:hover, .bar select:hover { border-color: var(--dim); }
 .bar button:focus-visible, .bar select:focus-visible, .frame button:focus-visible { outline: 2px solid var(--lilac); outline-offset: 2px; }
-.bar #skipBtn { border-color: var(--lilac); order: 1; }
+.bar #skipBtn { border-color: var(--lilac); }
 
 .marquee { position: absolute; display: none; border: .16em dashed #d4e0ff; background: rgba(90,130,255,.14); box-sizing: border-box; }
 #begin { position: absolute; left: 4%; bottom: 5%; font: 700 1em var(--pixel); color: #1c1b22; background: #ecebf2; border: 0; padding: .6em 1.4em; cursor: pointer; box-shadow: 0 0 0 2px #1c1b22, 0 0 0 4px #ecebf2; }
 .stage.story #begin { display: none; }
-#copyOv, #titleOv, #puzzleOv { cursor: crosshair; touch-action: none; }
+#copyOv, #titleOv, #puzzleOv, #arriveOv { cursor: crosshair; touch-action: none; }
 .ctx button:disabled { opacity: .4; cursor: default; }
 .ctx.vista { position: absolute; display: none; z-index: 5; width: auto; left: 0; top: 0; padding: .25em; gap: .1em; }
 .ctx.vista.on { display: grid; }
@@ -177,6 +199,11 @@ html:not(.capture) .bar p { color: #c4c8e6; }
       <button id="begin" type="button">Log in</button>
     </section>
 
+    <section class="ov" id="arriveOv">
+      <div class="marquee" id="amq"></div>
+      <div class="ctx vista" id="actx"></div>
+    </section>
+
     <section class="ov" id="cards"><div class="card-line" id="cardLine"></div><div class="skip-hint">click or Enter to skip · Esc to play</div></section>
 
     <section class="ov" id="titleOv"><div class="plate"><b>AERO</b></div></section>
@@ -229,13 +256,37 @@ html:not(.capture) .bar p { color: #c4c8e6; }
   </div>
 
   <nav class="bar" id="bar" aria-label="Scenes">
-    <div class="bar-text">
+    <div class="bar-top">
       <h1 id="sceneName">Copy</h1>
-      <p id="sceneNote">Opening scene.</p>
+      <details class="help" id="help">
+        <summary>Controls</summary>
+        <div class="help-pop">
+          <ul class="keys-desk">
+            <li><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</span>Walk</li>
+            <li><span><kbd>Shift</kbd></span>Run</li>
+            <li><span><kbd>Space</kbd></span>Jump</li>
+            <li><span><kbd>1</kbd></span>Roll your head</li>
+            <li><span><kbd>2</kbd></span>Throw your head</li>
+            <li><span>Hold <kbd>1</kbd> / <kbd>2</kbd> + mouse</span>Aim, then release or click</li>
+            <li><span>Drag</span>Select runners</li>
+            <li><span><kbd>Ctrl</kbd> <kbd>C</kbd> / <kbd>X</kbd></span>Copy / cut the selection</li>
+            <li><span>Click</span>Paste</li>
+            <li><span><kbd>Delete</kbd></span>Delete the selection</li>
+            <li><span><kbd>Esc</kbd></span>Cancel</li>
+          </ul>
+          <ul class="keys-touch">
+            <li><span>▲ ◀ ▼ ▶</span>Walk</li>
+            <li><span>JUMP</span>Jump</li>
+            <li><span>Drag</span>Select runners</li>
+            <li><span>Copy / Cut / Delete</span>Act on the selection</li>
+            <li><span>Tap</span>Paste</li>
+          </ul>
+        </div>
+      </details>
     </div>
     <div class="controls">
       <button id="newBtn" type="button">New game</button>
-      <button id="skipBtn" type="button" style="visibility: hidden">Skip to game ›</button>
+      <button id="skipBtn" type="button" hidden>Skip to game ›</button>
       <button id="prevBtn" type="button" aria-label="Previous scene">&lt;</button>
       <select id="sceneSel" aria-label="Jump to scene"></select>
       <button id="nextBtn" type="button" aria-label="Next scene">&gt;</button>
@@ -275,7 +326,7 @@ const $ = s => document.querySelector(s);
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const frame = $('#frame'), stage = $('#stage'), bar = $('#bar');
-$('#pctx').innerHTML = $('#ctx').innerHTML;
+$('#pctx').innerHTML = $('#actx').innerHTML = $('#ctx').innerHTML;
 const QS = new URLSearchParams(location.search), SHAPE = QS.get('shape'), CAPTURE = QS.has('capture');
 const [RW, RH] = SHAPE === '9x16' ? [288, 512] : SHAPE === '1x1' ? [384, 384] : [400, 300];
 const AR = RW / RH;
@@ -884,26 +935,18 @@ function makeGhost() {
 }
 const POSE_KEYS = ['hips', 'spine', 'chest', 'hipL', 'hipR', 'kneeL', 'kneeR', 'shL', 'shR', 'elL', 'elR', 'body'];
 
-function buildCopy() {
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a292e);
-  const cam = new THREE.PerspectiveCamera(FOV(38), RW / RH, .1, 100); cam.position.set(0, 2.2, 9); cam.lookAt(0, 1.1, 0);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3848, .7));
-  const key = new THREE.DirectionalLight(0xffffff, 1.2); key.position.set(3, 6, 5); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
-  Object.assign(key.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8 }); scene.add(key);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: .35 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
-  let lead = null, crew = [];
-  const MAXCREW = 16;
-  const clampP = p => { p.x = Math.max(-4.4, Math.min(4.4, p.x)); p.z = Math.max(-2.4, Math.min(2.2, p.z)); };
-  const mq = $('#marquee'), ctx = $('#ctx'), ov = $('#copyOv'), login = $('#begin');
-  const A = -1.6, B = 1.9, LOOP = 8.6;
-  let demoT0 = 0;
+function crewKit(o) {
+  const { scene, cam, clamp, ov, ctx } = o, floorY = o.floorY || 0, MAX = o.max || 16, V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const { rect, hide: hideRect } = marquee(o.mq);
+  const K = { crew: [], lead: null, mouse: null, drag: null, now: 0, rect, hideRect };
+  let sel = [], selRect = null, carry = null, margin = null, ghosts = [];
   const MERGE_R = .5, MERGE_T = .7, merges = [];
   const snapPose = r => ({ pos: r.root.position.clone(), yaw: r.root.rotation.y, rot: POSE_KEYS.map(n => r[n].rotation.clone()),
     hipsY: r.hips.position.y, bodyY: r.body.position.y, head: r.head.position.clone(), phase: r.phase || 0 });
   const circMean = a => Math.atan2(a.reduce((s, x) => s + Math.sin(x), 0), a.reduce((s, x) => s + Math.cos(x), 0));
   const angDiff = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
   function stepMerges(dt, t) {
-    const free = crew.filter(r => !r.merge && !r.dying && r.root.visible && r.walk.settled());
+    const free = K.crew.filter(r => !r.merge && !r.dying && r.root.visible && r.walk.settled());
     const up = new Map(free.map(r => [r, r])), find = r => { while (up.get(r) !== r) r = up.get(r); return r; };
     for (let i = 0; i < free.length; i++) for (let j = i + 1; j < free.length; j++) {
       const a = free[i], b = free[j];
@@ -923,7 +966,7 @@ function buildCopy() {
       merges.push(g);
     }
     for (let gi = merges.length - 1; gi >= 0; gi--) {
-      const g = merges[gi], u = Math.min(1, (t - g.t0) / MERGE_T), e = ease(u), A = g.avg;
+      const g = merges[gi], u = Math.min(1, (t - g.t0) / MERGE_T), e = smooth(u), A = g.avg;
       g.members.forEach((r, i) => {
         if (r.dead) return;
         const f = g.from[i];
@@ -934,7 +977,7 @@ function buildCopy() {
         r.phase = f.phase + angDiff(f.phase, A.phase) * e;
       });
       if (u < 1) continue;
-      const alive = g.members.filter(r => !r.dead), keep = alive.includes(lead) ? lead : alive[0];
+      const alive = g.members.filter(r => !r.dead), keep = alive.includes(K.lead) ? K.lead : alive[0];
       alive.forEach(r => {
         r.merge = null;
         if (r === keep) { r.walk.setFacing(A.yaw); r.phase = ((A.phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2); return; }
@@ -944,28 +987,135 @@ function buildCopy() {
       merges.splice(gi, 1); chime(880);
     }
   }
-  const swarmLead = () => {
-    if (crew.length < 2) return null;
-    const c = crew.reduce((a, r) => a.add(r.root.position), V(0, 0, 0)).multiplyScalar(1 / crew.length);
-    let best = null, bd = Infinity; for (const r of crew) { const d = r.root.position.distanceToSquared(c); if (d < bd) { bd = d; best = r; } }
+  K.swarmLead = () => {
+    if (K.crew.length < 2) return null;
+    const c = K.crew.reduce((a, r) => a.add(r.root.position), V(0, 0, 0)).multiplyScalar(1 / K.crew.length);
+    let best = null, bd = Infinity; for (const r of K.crew) { const d = r.root.position.distanceToSquared(c); if (d < bd) { bd = d; best = r; } }
     return best;
   };
-  const syncLogin = () => { login.style.display = crew.length ? 'none' : ''; };
+  K.add = r => { r.walk = walker(r, clamp, cam, K.swarmLead); scene.add(r.root); K.crew.push(r); if (!K.lead) K.lead = r; if (o.onAdd) o.onAdd(r); return r; };
+  const floorPlane = new THREE.Plane(V(0, 1, 0), -floorY);
+  const floorAt = p => aimRay(cam, p).intersectPlane(floorPlane, new THREE.Vector3());
+  const centre = r => screenCentre(r.root.position, cam);
+  K.bounds = rs => screenBounds(rs, r => r.root.position, cam);
+  K.around = (rs, m = margin) => { const b = K.bounds(rs); if (!b || !m) return null; const k = b.y1 - b.y0;
+    return { x0: b.x0 - m.l * k, y0: b.y0 - m.t * k, x1: b.x1 + m.r * k, y1: b.y1 + m.b * k }; };
+  function dropGhosts() { ghosts.forEach(g => scene.remove(g.root)); ghosts = []; }
+  function clearSel() { sel.forEach(r => { if (r.hideAfter) { r.hideAfter = false; r.root.visible = true; } }); sel = []; selRect = null; carry = null; margin = null; dropGhosts(); ctx.classList.remove('on'); hideRect(); }
+  K.clearSel = clearSel;
+  const landing = p => {
+    const m = margin || { l: 0, t: 0, r: 0, b: 0 }, k = carry.h / (1 + m.t + m.b);
+    const to = floorAt({ x: p.x - (m.r - m.l) * k / 2, y: p.y + carry.h / 2 - m.b * k - k * .03 });
+    return to && carry.from ? { dx: to.x - carry.from.x, dz: to.z - carry.from.z } : null; };
+  K.poseGhost = (g, x, z) => {
+    const s = g.src.root; g.root.position.set(x, s.position.y, z); clamp(g.root.position); g.root.rotation.y = s.rotation.y;
+    POSE_KEYS.forEach(k => { g[k].rotation.copy(g.src[k].rotation); if (k === 'hips' || k === 'body') g[k].position.copy(g.src[k].position); });
+    g.head.position.copy(g.src.head.position);
+  };
+  function placeGhosts() {
+    const d = K.mouse && landing(K.mouse); if (d) carry.last = d;
+    const D = carry.last || { dx: 0, dz: 0 };
+    ghosts.forEach(g => { K.poseGhost(g, g.src.root.position.x + D.dx, g.src.root.position.z + D.dz); g.root.visible = true; });
+  }
+  const placeMenu = () => placeBeside(ctx, selRect);
+  function begin(kind) {
+    if (!sel.length || carry) return; ctx.classList.remove('on');
+    if (kind === 'delete') { sel.forEach(r => { r.flick = K.now + .35; r.hideAfter = true; r.dying = true; }); sel = []; clearSel(); chime(300); return; }
+    const src = sel.reduce((a, r) => a.add(r.root.position), V(0, 0, 0)).multiplyScalar(1 / sel.length);
+    carry = { kind, w: selRect.x1 - selRect.x0, h: selRect.y1 - selRect.y0, from: V(src.x, 0, src.z) };
+    if (kind === 'cut') sel.forEach(r => { r.flick = K.now + .35; r.hideAfter = true; });
+    const n = kind === 'copy' ? Math.max(0, MAX - K.crew.length) : sel.length;
+    ghosts = sel.slice(0, n).map(src => { const g = makeGhost(); g.src = src; scene.add(g.root); return g; });
+    placeGhosts();
+    chime(kind === 'copy' ? 660 : 520);
+  }
+  function paste(p) {
+    K.mouse = p; placeGhosts();
+    if (carry.kind === 'copy') {
+      ghosts.forEach(g => {
+        const r = makeRunner(); r.root.position.set(g.root.position.x, floorY, g.root.position.z);
+        r.root.rotation.y = g.root.rotation.y; r.seed = Math.random() * 10; r.flick = K.now + .3; K.add(r);
+      });
+    } else ghosts.forEach(g => { const r = g.src; r.root.position.x = g.root.position.x; r.root.position.z = g.root.position.z; r.hideAfter = false; r.flick = K.now + .3; });
+    chime(784); sel = []; clearSel();
+  }
+  const user = () => { if (o.onUser) o.onUser(); };
+  ov.addEventListener('pointerdown', e => {
+    if (!o.isActive() || e.target.closest('button, .ctx')) return;
+    user(); const p = framePx(e); K.mouse = p;
+    if (carry) { paste(p); return; }
+    clearSel(); K.drag = { x0: p.x, y0: p.y }; try { ov.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault();
+  });
+  ov.addEventListener('pointermove', e => { if (!o.isActive()) return; K.mouse = framePx(e); if (K.drag) rect(K.drag.x0, K.drag.y0, K.mouse.x, K.mouse.y); });
+  ov.addEventListener('pointerup', e => {
+    if (!K.drag) return;
+    const d = K.drag, p = framePx(e), r = { x0: Math.min(d.x0, p.x), y0: Math.min(d.y0, p.y), x1: Math.max(d.x0, p.x), y1: Math.max(d.y0, p.y) }; K.drag = null;
+    if (r.x1 - r.x0 < 8 || r.y1 - r.y0 < 8) { hideRect(); return; }
+    sel = K.crew.filter(m => { const c = centre(m); return m.root.visible && c.x > r.x0 && c.x < r.x1 && c.y > r.y0 && c.y < r.y1; });
+    if (!sel.length) { hideRect(); return; }
+    const b = K.bounds(sel), k = b.y1 - b.y0;
+    margin = { l: (b.x0 - r.x0) / k, t: (b.y0 - r.y0) / k, r: (r.x1 - b.x1) / k, b: (r.y1 - b.y1) / k };
+    selRect = r; ctx.classList.add('on'); placeMenu();
+  });
+  ctx.addEventListener('click', e => { const b = e.target.closest('button'); if (b) begin(b.dataset.a); });
+  addEventListener('keydown', e => {
+    if (!o.isActive()) return;
+    if ((e.metaKey || e.ctrlKey) && (e.code === 'KeyC' || e.code === 'KeyX') && sel.length && !carry) { begin(e.code === 'KeyC' ? 'copy' : 'cut'); e.preventDefault(); }
+    else if ((e.code === 'Delete' || e.code === 'Backspace') && sel.length && !carry) { begin('delete'); e.preventDefault(); }
+    else if (e.code === 'Escape' && (sel.length || carry || K.drag)) { K.drag = null; clearSel(); e.preventDefault(); }
+    else if (KEYMAP[e.code]) user();
+  });
+  K.update = (dt, t) => {
+    K.now = t;
+    for (const r of K.crew) if (!r.merge) r.walk(dt, t + (r.seed || 0));
+    stepMerges(dt, t);
+    for (const r of K.crew) {
+      if (r.flick && t < r.flick) r.root.visible = Math.floor(t * 20) % 2 === 0;
+      else if (r.flick) { r.flick = 0; r.root.visible = !r.hideAfter; if (r.dying) { r.walk.cancel(); r.walk.dispose(); if (r.head.parent !== r.root) r.head.parent.remove(r.head); scene.remove(r.root); r.dead = true; } }
+    }
+    if (K.crew.some(r => r.dead)) {
+      K.crew.filter(r => r.dead).forEach(r => { if (o.onRemove) o.onRemove(r); });
+      K.crew = K.crew.filter(r => !r.dead); K.lead = K.crew[0] || null; if (o.onChange) o.onChange();
+    }
+    if (carry) {
+      placeGhosts();
+      const pulse = .8 + Math.sin(t * 6) * .2; GHOST.lineSkin.color.setRGB(.9 * pulse, .92 * pulse, pulse); GHOST.line.color.copy(GHOST.lineSkin.color);
+      const a = K.around(ghosts);
+      if (a) { carry.h += (a.y1 - a.y0 - carry.h) * Math.min(1, dt * 8); rect(a.x0, a.y0, a.x1, a.y1); }
+    } else if (sel.length && margin && !K.drag) {
+      const a = K.around(sel.filter(r => r.root.visible)); if (a) { selRect = a; rect(a.x0, a.y0, a.x1, a.y1); if (ctx.classList.contains('on')) placeMenu(); }
+    }
+  };
+  K.cancel = () => { K.drag = null; clearSel(); };
+  return K;
+}
+
+function buildCopy() {
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a292e);
+  const cam = new THREE.PerspectiveCamera(FOV(38), RW / RH, .1, 100); cam.position.set(0, 2.2, 9); cam.lookAt(0, 1.1, 0);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3848, .7));
+  const key = new THREE.DirectionalLight(0xffffff, 1.2); key.position.set(3, 6, 5); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
+  Object.assign(key.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8 }); scene.add(key);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: .35 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  const clampP = p => { p.x = Math.max(-4.4, Math.min(4.4, p.x)); p.z = Math.max(-2.4, Math.min(2.2, p.z)); };
+  const login = $('#begin');
+  const A = -1.6, B = 1.9, LOOP = 8.6;
+  let demoT0 = 0, mode = 'demo', active = false;
+  const K = crewKit({ scene, cam, clamp: clampP, ov: $('#copyOv'), mq: $('#marquee'), ctx: $('#ctx'), isActive: () => active, onUser: () => toPlay(), onChange: () => syncLogin() });
+  const syncLogin = () => { login.style.display = K.crew.length ? 'none' : ''; };
   function spawn() {
-    if (crew.length) return;
-    const r = makeRunner(); r.root.position.set(A, 0, 0); r.root.rotation.y = .2; r.walk = walker(r, clampP, cam, swarmLead); r.flick = now + .5;
-    scene.add(r.root); crew.push(r); lead = r; mode = 'demo'; demoT0 = now; S = null; syncLogin(); chime(660);
+    if (K.crew.length) return;
+    const r = makeRunner(); r.root.position.set(A, 0, 0); r.root.rotation.y = .2; r.flick = K.now + .5;
+    K.add(r); K.lead = r; mode = 'demo'; demoT0 = K.now; S = null; syncLogin(); chime(660);
   }
   login.onclick = () => { if (active) spawn(); };
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
   function box(x) { const a = toFrame(V(x - .66, 2.5, 0), cam), b = toFrame(V(x + .66, -.08, 0), cam); return { x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y }; }
   const ease = smooth;
-  const { rect, hide: hideRect } = marquee(mq);
-  let mode = 'demo', active = false, now = 0;
 
   const hand = new THREE.Vector3(); let S = null, dragging = false;
   function demo(dt, t) {
-    const R = lead, u = (t - demoT0) % LOOP, b0 = box(A);
+    const R = K.lead, u = (t - demoT0) % LOOP, b0 = box(A);
     R.root.position.set(u >= 4.7 ? B : A, 0, 0); R.root.rotation.y = .2;
     animateRunner(R, dt, 0, true, t);
     let arm = null, crouch = 0;
@@ -979,10 +1129,10 @@ function buildCopy() {
     if (u < .5) S = null;
     if (u >= 1.3 && u < 2.8) {
       if (!dragging || !S) S = { x: Math.min(hp.x, b0.x), y: Math.min(hp.y, b0.y) }; dragging = true; const k = ease((u - 1.3) / 1.5) ** 2;
-      rect(S.x, S.y, hp.x + (b0.x + b0.w - hp.x) * k, hp.y + (b0.y + b0.h - hp.y) * k); demoMargin = null;
+      K.rect(S.x, S.y, hp.x + (b0.x + b0.w - hp.x) * k, hp.y + (b0.y + b0.h - hp.y) * k); demoMargin = null;
     } else if (u >= 2.8 && u < 5.1) {
       if (dragging || !demoMargin) {
-        const r = { x0: S ? S.x : b0.x, y0: S ? S.y : b0.y, x1: b0.x + b0.w, y1: b0.y + b0.h }, b = bounds([R]), k = b.y1 - b.y0;
+        const r = { x0: S ? S.x : b0.x, y0: S ? S.y : b0.y, x1: b0.x + b0.w, y1: b0.y + b0.h }, b = K.bounds([R]), k = b.y1 - b.y0;
         demoMargin = { l: (b.x0 - r.x0) / k, t: (b.y0 - r.y0) / k, r: (r.x1 - b.x1) / k, b: (r.y1 - b.y1) / k };
       }
       dragging = false;
@@ -994,99 +1144,24 @@ function buildCopy() {
     R.root.visible = vis && !(R.flick && t < R.flick && Math.floor(t * 20) % 2);
     const g = demoGhostFor(); g.root.visible = carried;
     if (carried) {
-      g.src = R; poseGhost(g, A + (B - A) * ease((u - 3.6) / 1.1), 0);
+      g.src = R; K.poseGhost(g, A + (B - A) * ease((u - 3.6) / 1.1), 0);
       const pulse = .8 + Math.sin(t * 6) * .2; GHOST.lineSkin.color.setRGB(.9 * pulse, .92 * pulse, pulse); GHOST.line.color.copy(GHOST.lineSkin.color);
     }
-    if (demoMargin) { const a = around(carried ? [g] : [R], demoMargin); if (a) rect(a.x0, a.y0, a.x1, a.y1); }
-    else if (!(u >= 1.3 && u < 2.8)) hideRect();
+    if (demoMargin) { const a = K.around(carried ? [g] : [R], demoMargin); if (a) K.rect(a.x0, a.y0, a.x1, a.y1); }
+    else if (!(u >= 1.3 && u < 2.8)) K.hideRect();
   }
   function resetPose(r) { r.hips.position.y = .98; r.spine.rotation.x = 0; r.shL.rotation.z = -.1; r.shR.rotation.z = .1; r.root.visible = true; }
-  function toPlay() { if (mode === 'play') return; mode = 'play'; if (lead) resetPose(lead); if (demoGhost) demoGhost.root.visible = false; demoMargin = null; hideRect(); }
-
-  const floorPlane = new THREE.Plane(V(0, 1, 0), 0);
-  const floorAt = p => aimRay(cam, p).intersectPlane(floorPlane, new THREE.Vector3());
-  const centre = r => screenCentre(r.root.position, cam);
-  let mouse = null, drag = null, sel = [], selRect = null, carry = null, margin = null;
-  const bounds = rs => screenBounds(rs, r => r.root.position, cam);
-  const around = (rs, m = margin) => { const b = bounds(rs); if (!b || !m) return null; const k = b.y1 - b.y0;
-    return { x0: b.x0 - m.l * k, y0: b.y0 - m.t * k, x1: b.x1 + m.r * k, y1: b.y1 + m.b * k }; };
-  let ghosts = [];
-  function dropGhosts() { ghosts.forEach(g => scene.remove(g.root)); ghosts = []; }
-  function clearSel() { sel.forEach(r => { if (r.hideAfter) { r.hideAfter = false; r.root.visible = true; } }); sel = []; selRect = null; carry = null; margin = null; dropGhosts(); ctx.classList.remove('on'); hideRect(); }
-  const landing = p => {
-    const m = margin || { l: 0, t: 0, r: 0, b: 0 }, k = carry.h / (1 + m.t + m.b);
-    const to = floorAt({ x: p.x - (m.r - m.l) * k / 2, y: p.y + carry.h / 2 - m.b * k - k * .03 });
-    return to && carry.from ? { dx: to.x - carry.from.x, dz: to.z - carry.from.z } : null; };
-  function poseGhost(g, x, z) {
-    const s = g.src.root; g.root.position.set(x, s.position.y, z); clampP(g.root.position); g.root.rotation.y = s.rotation.y;
-    POSE_KEYS.forEach(k => { g[k].rotation.copy(g.src[k].rotation); if (k === 'hips' || k === 'body') g[k].position.copy(g.src[k].position); });
-    g.head.position.copy(g.src.head.position);
-  }
-  function placeGhosts() {
-    const d = mouse && landing(mouse); if (d) carry.last = d;
-    const D = carry.last || { dx: 0, dz: 0 };
-    ghosts.forEach(g => { poseGhost(g, g.src.root.position.x + D.dx, g.src.root.position.z + D.dz); g.root.visible = true; });
-  }
+  function toPlay() { if (mode === 'play') return; mode = 'play'; if (K.lead) resetPose(K.lead); if (demoGhost) demoGhost.root.visible = false; demoMargin = null; K.hideRect(); }
   let demoGhost = null, demoMargin = null;
   const demoGhostFor = () => { if (!demoGhost) { demoGhost = makeGhost(); demoGhost.root.visible = false; scene.add(demoGhost.root); } return demoGhost; };
-  function openMenu() {
-    ctx.classList.add('on'); placeMenu();
-  }
-  function placeMenu() { placeBeside(ctx, selRect); }
-  function begin(kind) {
-    if (!sel.length || carry) return; ctx.classList.remove('on');
-    if (kind === 'delete') { sel.forEach(r => { r.flick = now + .35; r.hideAfter = true; r.dying = true; }); sel = []; clearSel(); chime(300); return; }
-    const src = sel.reduce((a, r) => a.add(r.root.position), V(0, 0, 0)).multiplyScalar(1 / sel.length);
-    carry = { kind, w: selRect.x1 - selRect.x0, h: selRect.y1 - selRect.y0, from: V(src.x, 0, src.z) };
-    if (kind === 'cut') sel.forEach(r => { r.flick = now + .35; r.hideAfter = true; });
-    const n = kind === 'copy' ? Math.max(0, MAXCREW - crew.length) : sel.length;
-    ghosts = sel.slice(0, n).map(src => { const g = makeGhost(); g.src = src; scene.add(g.root); return g; });
-    placeGhosts();
-    chime(kind === 'copy' ? 660 : 520);
-  }
-  function paste(p) {
-    mouse = p; placeGhosts();
-    if (carry.kind === 'copy') {
-      ghosts.forEach(g => {
-        const r = makeRunner(); r.root.position.set(g.root.position.x, 0, g.root.position.z);
-        r.root.rotation.y = g.root.rotation.y; r.walk = walker(r, clampP, cam, swarmLead); r.seed = Math.random() * 10; r.flick = now + .3; scene.add(r.root); crew.push(r);
-      });
-    } else ghosts.forEach(g => { const r = g.src; r.root.position.x = g.root.position.x; r.root.position.z = g.root.position.z; r.hideAfter = false; r.flick = now + .3; });
-    chime(784); sel = []; clearSel();
-  }
-  ov.addEventListener('pointerdown', e => {
-    if (!active || e.target.closest('button, .ctx')) return;
-    toPlay(); const p = framePx(e); mouse = p;
-    if (carry) { paste(p); return; }
-    clearSel(); drag = { x0: p.x, y0: p.y }; try { ov.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault();
-  });
-  ov.addEventListener('pointermove', e => { mouse = framePx(e); if (drag) rect(drag.x0, drag.y0, mouse.x, mouse.y); });
-  ov.addEventListener('pointerup', e => {
-    if (!drag) return;
-    const p = framePx(e), r = { x0: Math.min(drag.x0, p.x), y0: Math.min(drag.y0, p.y), x1: Math.max(drag.x0, p.x), y1: Math.max(drag.y0, p.y) }; drag = null;
-    if (r.x1 - r.x0 < 8 || r.y1 - r.y0 < 8) { hideRect(); return; }
-    sel = crew.filter(m => { const c = centre(m); return m.root.visible && c.x > r.x0 && c.x < r.x1 && c.y > r.y0 && c.y < r.y1; });
-    if (!sel.length) { hideRect(); return; }
-    const b = bounds(sel), k = b.y1 - b.y0;
-    margin = { l: (b.x0 - r.x0) / k, t: (b.y0 - r.y0) / k, r: (r.x1 - b.x1) / k, b: (r.y1 - b.y1) / k };
-    selRect = r; openMenu();
-  });
-  ctx.addEventListener('click', e => { const b = e.target.closest('button'); if (b) begin(b.dataset.a); });
-  addEventListener('keydown', e => {
-    if (!active) return;
-    if ((e.metaKey || e.ctrlKey) && (e.code === 'KeyC' || e.code === 'KeyX') && sel.length && !carry) { begin(e.code === 'KeyC' ? 'copy' : 'cut'); e.preventDefault(); }
-    else if ((e.code === 'Delete' || e.code === 'Backspace') && sel.length && !carry) { begin('delete'); e.preventDefault(); }
-    else if (e.code === 'Escape' && (sel.length || carry || drag)) { drag = null; clearSel(); e.preventDefault(); }
-    else if (KEYMAP[e.code]) toPlay();
-  });
 
   return { scene, cam,
     update(dt, t) {
-      now = t;
-      if (mode === 'demo') { if (lead) demo(dt, t); return; }
-      for (const r of crew) if (!r.merge) r.walk(dt, t + (r.seed || 0));
-      stepMerges(dt, t);
-      if (drag && mouse && lead && lead.root.visible) {
+      K.now = t;
+      if (mode === 'demo') { if (K.lead) demo(dt, t); return; }
+      K.update(dt, t);
+      const lead = K.lead, mouse = K.mouse;
+      if (K.drag && mouse && lead && lead.root.visible) {
         lead.root.rotation.y += (0 - lead.root.rotation.y) * Math.min(1, dt * 10);
         lead.root.updateMatrixWorld(true);
         const c = toFrame(lead.chest.getWorldPosition(V(0, 0, 0)), cam), right = mouse.x > c.x;
@@ -1094,22 +1169,9 @@ function buildCopy() {
         sh.rotation.z = Math.atan2(mouse.x - s.x, mouse.y - s.y); sh.rotation.x = 0; el.rotation.x = 0;
         (right ? lead.shL : lead.shR).rotation.z = right ? -.1 : .1;
       } else if (lead) { lead.shL.rotation.z = -.1; lead.shR.rotation.z = .1; }
-      for (const r of crew) {
-        if (r.flick && t < r.flick) r.root.visible = Math.floor(t * 20) % 2 === 0;
-        else if (r.flick) { r.flick = 0; r.root.visible = !r.hideAfter; if (r.dying) { r.walk.cancel(); r.walk.dispose(); if (r.head.parent !== r.root) r.head.parent.remove(r.head); scene.remove(r.root); r.dead = true; } }
-      }
-      if (crew.some(r => r.dead)) { crew = crew.filter(r => !r.dead); lead = crew[0] || null; syncLogin(); }
-      if (carry) {
-        placeGhosts();
-        const pulse = .8 + Math.sin(t * 6) * .2; GHOST.lineSkin.color.setRGB(.9 * pulse, .92 * pulse, pulse); GHOST.line.color.copy(GHOST.lineSkin.color);
-        const a = around(ghosts);
-        if (a) { carry.h += (a.y1 - a.y0 - carry.h) * Math.min(1, dt * 8); rect(a.x0, a.y0, a.x1, a.y1); }
-      } else if (sel.length && margin && !drag) {
-        const a = around(sel.filter(r => r.root.visible)); if (a) { selRect = a; rect(a.x0, a.y0, a.x1, a.y1); if (ctx.classList.contains('on')) placeMenu(); }
-      }
     },
     login: spawn,
-    enter() { active = true; syncLogin(); if (stage.classList.contains('story')) spawn(); }, leave() { active = false; drag = null; clearSel(); } };
+    enter() { active = true; syncLogin(); if (stage.classList.contains('story')) spawn(); }, leave() { active = false; K.cancel(); } };
 }
 
 function buildTitle() {
@@ -1283,9 +1345,16 @@ function buildArrival() {
   const sk = document.createElement('canvas'); sk.width = sk.height = 32; const kx = sk.getContext('2d'); kx.fillStyle = '#f7c4e6'; kx.beginPath(); kx.moveTo(16, 0); kx.quadraticCurveTo(18, 14, 32, 16); kx.quadraticCurveTo(18, 18, 16, 32); kx.quadraticCurveTo(14, 18, 0, 16); kx.quadraticCurveTo(14, 14, 16, 0); kx.fill();
   const st = new THREE.CanvasTexture(sk); st.magFilter = THREE.NearestFilter;
   const spark = []; [[1.8, 4.6, -3, 1.6], [.4, .9, 1.4, .7]].forEach(([x, y, z, s]) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: st, transparent: true })); sp.position.set(x, y, z); sp.scale.set(s, s, 1); scene.add(sp); spark.push(sp); });
-  const R = makeRunner(); R.root.position.set(.6, TOP, .2); R.root.rotation.y = Math.PI / 2; scene.add(R.root);
-  const walk = walker(R, p => { p.x = Math.max(-4.8, Math.min(57.4, p.x)); p.z = Math.max(-1.25, Math.min(1.25, p.z)); }, cam);
-  const Rm = makeRunner(); Rm.root.scale.y = -1; Rm.parts.forEach(p => { p.material = p.material.clone(); p.material.transparent = true; p.material.opacity = .3; p.material.side = THREE.DoubleSide; p.castShadow = false; }); scene.add(Rm.root);
+  const clampA = p => { p.x = Math.max(-4.8, Math.min(57.4, p.x)); p.z = Math.max(-1.25, Math.min(1.25, p.z)); };
+  const mirrors = new Map();
+  const mirrorOf = () => { const m = makeRunner(); m.root.scale.y = -1; m.parts.forEach(p => { p.material = p.material.clone(); p.material.transparent = true; p.material.opacity = .3; p.material.side = THREE.DoubleSide; p.castShadow = false; }); return m; };
+  let active = false, lastX = .6;
+  const first = () => { const R = makeRunner(); R.root.position.set(lastX, TOP, .2); R.root.rotation.y = Math.PI / 2; R.flick = K.now + .4; K.add(R); };
+  const K = crewKit({ scene, cam, clamp: clampA, floorY: TOP, max: 8, ov: $('#arriveOv'), mq: $('#amq'), ctx: $('#actx'), isActive: () => active,
+    onAdd: r => { const m = mirrorOf(); scene.add(m.root); mirrors.set(r, m); },
+    onRemove: r => { const m = mirrors.get(r); if (m) { scene.remove(m.root); m.parts.forEach(q => q.material.dispose()); mirrors.delete(r); } },
+    onChange: () => { if (!K.crew.length) first(); } });
+  first();
   return { scene, cam,
     update(dt, t) {
       for (let i = 0; i < N; i++) {
@@ -1295,16 +1364,20 @@ function buildArrival() {
         P.set(c.p.x, 2 * TOP - c.p.y, c.p.z); E.set(-c.r.x, c.r.y, 0); Q.setFromEuler(E); M4.compose(P, Q, S); mirror.setMatrixAt(i, M4);
       }
       cubes.instanceMatrix.needsUpdate = mirror.instanceMatrix.needsUpdate = true;
-      walk(dt, t); const x = walk.focus().x;
-      cam.position.x += (x + 2.6 - cam.position.x) * Math.min(1, dt * 3); cam.lookAt(cam.position.x - 2.6, 1.6, 0);
-      Rm.root.position.set(x, TOP - walk.height(), R.root.position.z); Rm.root.rotation.y = R.root.rotation.y;
-      ['hipL', 'hipR', 'kneeL', 'kneeR', 'shL', 'shR', 'elL', 'elR', 'body', 'spine'].forEach(k => Rm[k].rotation.copy(R[k].rotation));
-      Rm.body.position.y = R.body.position.y; Rm.body.scale.copy(R.body.scale);
-      Rm.head.visible = R.head.parent === R.root; if (Rm.head.visible) Rm.head.position.copy(R.head.position);
+      K.update(dt, t);
+      if (K.lead) lastX = K.lead.walk.focus().x;
+      cam.position.x += (lastX + 2.6 - cam.position.x) * Math.min(1, dt * 3); cam.lookAt(cam.position.x - 2.6, 1.6, 0);
+      for (const [R, Rm] of mirrors) {
+        Rm.root.visible = R.root.visible;
+        Rm.root.position.set(R.root.position.x, 2 * TOP - R.root.position.y, R.root.position.z); Rm.root.rotation.y = R.root.rotation.y;
+        ['hipL', 'hipR', 'kneeL', 'kneeR', 'shL', 'shR', 'elL', 'elR', 'body', 'spine'].forEach(k => Rm[k].rotation.copy(R[k].rotation));
+        Rm.body.position.y = R.body.position.y; Rm.body.scale.copy(R.body.scale);
+        Rm.head.visible = R.head.parent === R.root; if (Rm.head.visible) Rm.head.position.copy(R.head.position);
+      }
       spark.forEach((s, i) => { const k = 1 + Math.sin(t * 3 + i * 2) * .15; s.scale.setScalar((i ? .7 : 1.6) * k); });
       panels.forEach((p, i) => { const y = p.y + Math.sin(t * .9 + i * 1.7) * .08; p.m.position.y = y; p.r.position.y = 2 * TOP - y; });
     },
-    enter() {}, leave() {} };
+    enter() { active = true; }, leave() { active = false; K.cancel(); } };
 }
 
 
@@ -2077,31 +2150,30 @@ async function goNext(id) {
   try { await staticBurst(400); if (rid !== run) return; await enter(SCENE_AT(id), rid, false); } catch (e) {}
 }
 
-const PLAY_NOTE = 'WASD moves, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it. Drag to look. Find 4 memories, then roll your head into the pipe to reach the puzzle levels.';
 const SCENES = [
-  { id: 'title',   name: 'Title',         note: 'Hover the sea to stir it; click to drop a ripple.', ov: 'titleOv', build: buildTitle },
-  { id: 'open',    name: 'Tutorial',     note: 'Text cards. Click or Enter skips, Esc goes to the game.', ov: 'cards', lines: ['Tutorial'] },
-  { id: 'copy',    name: 'Copy',          note: 'Log in to spawn him. Drag a box around him and pick Copy, Cut or Delete; click to paste. WASD walks everyone, Space jumps. Tap 1 / 2 to roll or throw heads; hold 1 / 2 and move the mouse to aim, add Shift to keep the crew in formation.', ov: 'copyOv', build: buildCopy, walk: true },
-  { id: 'arrive',  name: 'Arrival',       note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: null, build: buildArrival, walk: true },
-  { id: 'tape',    name: 'The lake',      note: 'Found tape: square, blown out, pixel subtitle.', ov: 'tapeOv', build: buildTape },
-  { id: 'player',  name: 'Memory player', note: 'WASD walks, Shift runs, Space jumps. Tap 1 to roll your head or 2 to throw it. Hold 1 / 2 and move the mouse to aim, then release or click to send it.', ov: 'playerOv', build: buildPlayer, walk: true },
-  { id: 'goup',    name: 'Go back up',    note: 'Text card.', ov: 'cards', lines: ['Intro'] },
-  { id: 'climb',   name: 'The climb',     note: PLAY_NOTE, ov: 'playOv', build: buildClimb, walk: true },
-  { id: 'lvcopy',  name: 'Copy crystal',  note: 'Pick up the crystal. Drag a box around yourself, choose Copy, then click a turquoise square. Every copy moves when you move.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvcopy), walk: true },
-  { id: 'lvsync',  name: 'In sync',       note: 'Copy yourself onto the other lane, then walk both of you onto the plates. A copy that falls is gone; make another.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvsync), walk: true },
-  { id: 'lvcut',   name: 'Cut',           note: 'Pick up the cut crystal. Drag a box around yourself, choose Cut, then click an orange ring to move there.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvcut), walk: true },
-  { id: 'lvboth',  name: 'Copy and cut',  note: 'Copies go on turquoise squares, cuts go on orange rings. Hold all three plates at once.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvboth), walk: true },
-  { id: 'lvhead',  name: 'Heads up',      note: 'Hold 2 and point to throw your head over a wall; hold 1 and point to roll it under a bar. Your body grows back where it stops.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvhead), walk: true },
-  { id: 'lvrelay', name: 'Relay', note: 'Copy yourself onto the turquoise square, then walk towards the bridge. The wall keeps the copy on the plate.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvrelay), walk: true },
-  { id: 'lvchain', name: 'Stepping rings', note: 'Cut yourself from ring to ring, then step on the plate to open the last bridge.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvchain), walk: true },
-  { id: 'lvhops', name: 'Hops', note: 'Throw over the wall and across the gap, roll under both barriers, then throw up to the exit.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvhops), walk: true },
-  { id: 'lvaim', name: 'Dead stop', note: 'Hold 1 and point at the plate: the head stops where you point.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvaim), walk: true },
-  { id: 'lvcutcopy', name: 'Cut the copy', note: 'Copy yourself, then cut the copy onto the orange ring so it holds the plate.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvcutcopy), walk: true },
-  { id: 'lvlanes', name: 'Three lanes', note: 'Two copies, three plates. Jump once to clear the gap in the third lane.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvlanes), walk: true },
-  { id: 'lvlineup', name: 'Line up', note: 'Use the short wall to line up your copy with you, step aside, then jump the gap together.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvlineup), walk: true },
-  { id: 'lvleap', name: 'Leapfrog', note: 'A copy holds the first bridge; cut it forward to hold the second.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvleap), walk: true },
-  { id: 'lvdelete', name: 'Back to one', note: 'Copy to open the long bridge, then delete the copy so your head can travel again.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvdelete), walk: true },
-  { id: 'lvfinal', name: 'All together', note: 'Copy, cut, hold three plates, delete both copies, throw, then roll.', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvfinal), walk: true },
+  { id: 'title',   name: 'Title',         ov: 'titleOv', build: buildTitle },
+  { id: 'open',    name: 'Tutorial',     ov: 'cards', lines: ['Tutorial'] },
+  { id: 'copy',    name: 'Copy',          ov: 'copyOv', build: buildCopy, walk: true },
+  { id: 'arrive',  name: 'Arrival',       ov: 'arriveOv', build: buildArrival, walk: true },
+  { id: 'tape',    name: 'The lake',      ov: 'tapeOv', build: buildTape },
+  { id: 'player',  name: 'Memory player', ov: 'playerOv', build: buildPlayer, walk: true },
+  { id: 'goup',    name: 'Go back up',    ov: 'cards', lines: ['Intro'] },
+  { id: 'climb',   name: 'The climb',     ov: 'playOv', build: buildClimb, walk: true },
+  { id: 'lvcopy',  name: 'Copy crystal',  ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvcopy), walk: true },
+  { id: 'lvsync',  name: 'In sync',       ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvsync), walk: true },
+  { id: 'lvcut',   name: 'Cut',           ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvcut), walk: true },
+  { id: 'lvboth',  name: 'Copy and cut',  ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvboth), walk: true },
+  { id: 'lvhead',  name: 'Heads up',      ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvhead), walk: true },
+  { id: 'lvrelay', name: 'Relay', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvrelay), walk: true },
+  { id: 'lvchain', name: 'Stepping rings', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvchain), walk: true },
+  { id: 'lvhops', name: 'Hops', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvhops), walk: true },
+  { id: 'lvaim', name: 'Dead stop', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvaim), walk: true },
+  { id: 'lvcutcopy', name: 'Cut the copy', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvcutcopy), walk: true },
+  { id: 'lvlanes', name: 'Three lanes', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvlanes), walk: true },
+  { id: 'lvlineup', name: 'Line up', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvlineup), walk: true },
+  { id: 'lvleap', name: 'Leapfrog', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvleap), walk: true },
+  { id: 'lvdelete', name: 'Back to one', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvdelete), walk: true },
+  { id: 'lvfinal', name: 'All together', ov: 'puzzleOv', build: () => buildPuzzle(LEVELS.lvfinal), walk: true },
 ];
 const CLIMB = SCENES.findIndex(d => d.id === 'climb');
 const SCENE_AT = id => SCENES.findIndex(d => d.id === id);
@@ -2123,7 +2195,7 @@ async function enter(i, id, hold) {
   $('#end').classList.remove('on');
   cur = (i + SCENES.length) % SCENES.length;
   const d = SCENES[cur];
-  sel.value = cur; $('#sceneName').textContent = d.name; $('#sceneNote').textContent = d.note;
+  sel.value = cur; $('#sceneName').textContent = d.name;
   try { history.replaceState(null, '', '#s' + cur); } catch (e) {}
   document.querySelectorAll('.ov').forEach(o => o.classList.toggle('on', o.id === d.ov));
   activeScene = get(cur); sceneT = 0;
@@ -2132,7 +2204,7 @@ async function enter(i, id, hold) {
   if (activeScene && activeScene.enter) activeScene.enter();
   if (d.lines) await card(d.lines, id, hold);
 }
-function storyMode(on) { stage.classList.toggle('story', on); $('#skipBtn').style.visibility = on ? '' : 'hidden'; }
+function storyMode(on) { stage.classList.toggle('story', on); $('#skipBtn').hidden = !on; $('#newBtn').hidden = on; }
 function jumpTo(i) { const id = ++run; storyMode(false); startAudio(); staticBurst(160); enter(i, id, true).catch(() => {}); }
 function skipToGame() { jumpTo(CLIMB); }
 async function newGame() {
@@ -2153,14 +2225,7 @@ $('#prevBtn').onclick = () => jumpTo(cur - 1);
 $('#nextBtn').onclick = () => jumpTo(cur + 1);
 $('#newBtn').onclick = newGame;
 $('#skipBtn').onclick = skipToGame;
-function fitBar() {
-  const t = $('.bar-text'), nm = $('#sceneName'), nt = $('#sceneNote'), was = [nm.textContent, nt.textContent];
-  t.style.minHeight = ''; let h = 0;
-  for (const d of SCENES) { nm.textContent = d.name; nt.textContent = d.note; h = Math.max(h, t.offsetHeight); }
-  [nm.textContent, nt.textContent] = was; t.style.minHeight = h + 'px';
-}
-function fitAll() { fitBar(); fit(); fitBar(); fit(); }
-addEventListener('resize', fitAll); fitAll(); if (document.fonts) document.fonts.ready.then(fitAll);
+addEventListener('resize', fit); if (document.fonts) document.fonts.ready.then(fit);
 $('#cards').addEventListener('click', () => { advance = true; });
 $('#again').onclick = () => { get(CLIMB).reset(); jumpTo(CLIMB); };
 async function finale() {

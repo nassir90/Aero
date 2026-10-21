@@ -29,6 +29,8 @@ The bar under the game steps through each scene. You can also jump straight to o
 
 ## Controls
 
+The Controls button in the bar lists these, with the on-screen pad instead on touch screens.
+
 | Key | Action |
 |---|---|
 | WASD / arrows | Walk (Shift runs) |
@@ -37,8 +39,8 @@ The bar under the game steps through each scene. You can also jump straight to o
 | 2 | Throw your head to the next platform |
 | Hold 1 / 2 + move the mouse | Aim at the spot under the cursor; release the key (or click) to send the head there |
 | Hold 1 / 2 + WASD | Go back to aiming along your facing |
-| Hold 1 / 2 + Shift (Copy scene) | Formation: the runner nearest the middle of the crew aims, and everyone else copies its direction and distance |
-| Drag (Copy scene) | Select, then Copy / Cut / Delete and click to paste. Cmd/Ctrl+C, Cmd/Ctrl+X and Delete also work. |
+| Hold 1 / 2 + Shift (Copy, Arrival) | Formation: the runner nearest the middle of the crew aims, and everyone else copies its direction and distance |
+| Drag (Copy, Arrival, puzzle levels) | Select, then Copy / Cut / Delete and click to paste. Cmd/Ctrl+C, Cmd/Ctrl+X and Delete also work. |
 | Drag (Climb) | Look around |
 
 ## Layout
