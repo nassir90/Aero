@@ -1,6 +1,6 @@
 # Aero
 
-Three.js game about a network nobody logged out of, rendered at 400×300 and scaled up with hard pixels. Style taken from [a reel by @snaptic_](https://www.instagram.com/reel/Dd4YWXbojO4/).
+ThreeJS port of [Snaptic](https://www.instagram.com/snaptic_/)'s upcoming game ([reel](https://www.instagram.com/reel/Dd4YWXbojO4/)), rendered at 400×300 and scaled up with hard pixels.
 
 **Live:** [mpts.ie/games/aero](https://mpts.ie/games/aero/)
 
@@ -64,4 +64,4 @@ python3 tests/puzzles.py               # play every puzzle level in headless Chr
 
 ## License
 
-The code is [MIT](LICENSE). The visual style is after [@snaptic_](https://www.instagram.com/snaptic_/)'s reel.
+The code is [MIT](LICENSE). The game design belongs to [@snaptic_](https://www.instagram.com/snaptic_/) and is not covered by it.
