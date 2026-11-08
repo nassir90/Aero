@@ -1,31 +1,40 @@
 # Aero
 
-A short three.js game. Its style is inspired by [a reel by @snaptic_](https://www.instagram.com/reel/Dd4YWXbojO4/). It renders at 400×300 and scales up with hard pixels. Play it at https://mpts.ie/games/aero/.
+Three.js game about a network nobody logged out of, rendered at 400×300 and scaled up with hard pixels. Style taken from [a reel by @snaptic_](https://www.instagram.com/reel/Dd4YWXbojO4/).
 
-![Title: a sea of ones and zeros](docs/title.jpg)
+**Live:** [mpts.ie/games/aero](https://mpts.ie/games/aero/)
 
-## Scenes
-
-The bar under the game steps through each scene. You can also jump straight to one with `#s0` to `#s22`.
-
-| | |
+| Title | Ripple |
 |---|---|
-| ![Title](docs/title.jpg) | ![A drop leaving the sea](docs/title_drop.jpg) |
-| **1. Title.** Hover to stir the sea of digits. | Click to drop a ripple. The centre sinks, rebounds into a peak, and throws off a blob of digits. The blob falls back in and sends out one smaller ripple. |
-| ![Tutorial](docs/cold_open.jpg) | ![Copy, before logging in](docs/copy_login.jpg) |
-| **2. Tutorial.** Text cards. | **3. Copy.** The room starts empty; Log in spawns the runner. Drag a box around him and pick Copy, Cut or Delete. The dashed box follows the selection as it moves and resizes with depth. |
-| ![Copying the crew](docs/copy_crew.jpg) | ![Arrival, sunset and daffodil](docs/arrival_1.jpg) |
-| Copies walk together. While you carry a copy, grey ghosts preview where it will land. Delete everyone and Log in comes back. Hold Shift while aiming heads and the crew keeps its formation. | **4. Arrival.** A glass walkway between "welcome back." and "We Missed You", with blocks flying along its whole length. |
-| ![Arrival, hands and penguin](docs/arrival_2.jpg) | ![Arrival, glacier and dunes](docs/arrival_3.jpg) |
-| Photos float beside it at different heights. They are generated, then reduced to 128 px and a 48-colour palette before the game loads them. | A blue glacier and sand dunes, |
-| ![Arrival, green hill and butterfly](docs/arrival_4.jpg) | ![Arrival, the end of the path](docs/arrival_5.jpg) |
-| a green hill and a golden butterfly. | The path ends at a blue "We Missed You" sign. |
-| ![The lake](docs/lake_tape.jpg) | ![Memory player](docs/memory_player.jpg) |
-| **5. The lake.** A found tape: square and blown out. | **6. Memory player.** A draggable media player window over the level. |
-| ![The climb](docs/climb.jpg) | ![Aiming a head throw](docs/climb_aim.jpg) |
-| **7. Intro**, a text card, leads into **8. The climb.** Pillars fading into white, four memories to collect, and a pipe. | Tap **2** to throw your head to the next platform. Hold 2 and move the mouse to aim at a spot, then release the key or click. The path shows as silver beads ending at a ring; pink beads mean the head would fall. |
-| ![Rolling into the pipe](docs/climb_pipe_in.jpg) | |
-| The pipe lies on the top plaza. Once all four memories are found, roll your head into it with **1**. | The pipe leads on to the 15 puzzle levels (`#s8` to `#s22`). Finishing the last one shows the end screen. |
+| ![Title](docs/title.jpg) | ![Ripple](docs/title_drop.jpg) |
+
+| Tutorial | Copy |
+|---|---|
+| ![Tutorial](docs/cold_open.jpg) | ![Copy](docs/copy_login.jpg) |
+
+| Crew | Arrival, sunset |
+|---|---|
+| ![Crew](docs/copy_crew.jpg) | ![Arrival, sunset](docs/arrival_1.jpg) |
+
+| Arrival, hands | Arrival, glacier |
+|---|---|
+| ![Arrival, hands](docs/arrival_2.jpg) | ![Arrival, glacier](docs/arrival_3.jpg) |
+
+| Arrival, hill | Arrival, end of the path |
+|---|---|
+| ![Arrival, hill](docs/arrival_4.jpg) | ![Arrival, end of the path](docs/arrival_5.jpg) |
+
+| Lake | Memory player |
+|---|---|
+| ![Lake](docs/lake_tape.jpg) | ![Memory player](docs/memory_player.jpg) |
+
+| Climb | Aiming |
+|---|---|
+| ![Climb](docs/climb.jpg) | ![Aiming](docs/climb_aim.jpg) |
+
+| Pipe | |
+|---|---|
+| ![Pipe](docs/climb_pipe_in.jpg) | |
 
 ## Controls
 
@@ -43,12 +52,16 @@ The Controls button in the bar lists these, with the on-screen pad instead on to
 | Drag (Copy, Arrival, puzzle levels) | Select, then Copy / Cut / Delete and click to paste. Cmd/Ctrl+C, Cmd/Ctrl+X and Delete also work. |
 | Drag (Climb) | Look around |
 
-## Layout
+Jump to a scene with `#s0` to `#s22`.
 
-- `public/games/aero/` is the game. Run `python3 -m http.server` in `public/` and open `/games/aero/`.
-- `promo/` makes the videos. `promo/takes.mjs` lists the takes that TapaTab (`~/projects/TapaTab`) records frame by frame from the running game, `promo/rigs.js` drives each scene, and ShadowKit (`~/projects/ShadowKit`) builds each video in `promo/videos/` from its edit list, script and voiceover (`python3 ~/projects/ShadowKit/make.py <id>`, run from `promo/`).
-- The game also renders natively at other shapes: add `?shape=9x16` or `?shape=1x1` to the URL, and `&capture` to hide the controls. `studio/promo.js` and `studio/shadow/clips.js` hold the older scripted shots that `promo/takes.mjs` still reuses, and `studio/capture.mjs` renders the square site clips (`node studio/capture.mjs sq_sea 1x1 out/`).
-- `tests/puzzles.py` plays every puzzle level with real keyboard and mouse input in headless Chrome (`python3 tests/puzzles.py`, or name tests to run only those).
-- The page opens on the game, which sits in the clouds at the top, and scrolls down to the square clips (`public/games/aero/media/`). The sky image fades out through a gradient mask into a blue sampled from its top edge.
-- `docs/` holds the screenshots above.
-- `cloudflare.config.ts` and `src/index.ts` define the Cloudflare Worker that serves `public/` on the route `mpts.ie/games/aero*`. Run `npm install`, then `npx cf deploy`. mpts.ie itself is [BannerAndLogo](https://github.com/nassir90/BannerAndLogo) on `mpts.ie/*`; this route is more specific, so it wins. Aero is listed on the games index, [mpts.ie/games](https://mpts.ie/games/), and has a stack of clips on the home page (BannerAndLogo's `site/games/index.html` and `site/index.html`), so a changed route needs updating there too.
+## Running it
+
+```bash
+cd public && python3 -m http.server   # then open /games/aero/
+npm install && npm run deploy          # deploy the Cloudflare Worker
+python3 tests/puzzles.py               # play every puzzle level in headless Chrome
+```
+
+## License
+
+The code is [MIT](LICENSE). The visual style is after [@snaptic_](https://www.instagram.com/snaptic_/)'s reel.
