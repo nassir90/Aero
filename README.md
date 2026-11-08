@@ -58,7 +58,6 @@ Jump to a scene with `#s0` to `#s22`.
 
 ```bash
 cd public && python3 -m http.server   # then open /games/aero/
-npm install && npm run deploy          # deploy the Cloudflare Worker
 python3 tests/puzzles.py               # play every puzzle level in headless Chrome
 ```
 
